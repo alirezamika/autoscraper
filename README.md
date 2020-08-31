@@ -1,41 +1,36 @@
-AutoScraper: A Smart Automatic Scraper for Python
--------------------------------------------------
+# AutoScraper: A Smart Automatic Scraper for Python
+
 
 This project is made for automatic web scraping to make scraping easy. 
-It gets a url or html content of a web page and a list of sample data which we want to scrape from that page; Then it learns the scraping rules and returns the similar elements. 
-Then you can use this learnt object with new urls to get similar content of those new pages.
+It gets an url or the html content of a web page and a list of sample data which we want to scrape from that page. It learns the scraping rules and returns the similar elements. Then you can use this learned object with new urls to get similar content of those new pages.
 
-Installation
-------------
+## Installation
+------------------------------------
+
 It's compatible with python3.
 
 Install from source:
-
-.. code-block:: bash
 
     $ python setup.py install
 
     
 Install latest version from git repository using pip:
 
-.. code-block:: bash
-
     $ pip install git+https://github.com/alirezamika/autoscraper.git
 
 
-How to use - Getting similar results
+## How to use
 ------------------------------------
+### Getting similar results
 
 Say we want to fetch all related post titles in a stackoverflow page:
-
-
-.. code:: python
 
     from autoscraper import AutoScraper
 
     url = 'https://stackoverflow.com/questions/2081586/web-scraping-with-python'
 
-    # We can add one or multiple candidates here
+    # We can add one or multiple candidates here.
+    # You can also put urls here to retrive urls.
     wanted_list = ["How to call an external command?"]
 
     scraper = AutoScraper()
@@ -44,9 +39,6 @@ Say we want to fetch all related post titles in a stackoverflow page:
 
 
 Here's the output:
-
-
-.. code:: python
 
     [
         'How do I merge two dictionaries in a single expression in Python (taking union of dictionaries)?', 
@@ -60,20 +52,14 @@ Here's the output:
         'Why is “1000000000000000 in range(1000000000000001)” so fast in Python 3?'
     ]
 
-You can also put urls in the wanted list.
-Now you can use the `scraper` object to get related topics to any stackoverflow post:
-
-.. code:: python
+Now you can use the `scraper` object to get related topics of any stackoverflow page:
 
     scraper.get_result_similar('https://stackoverflow.com/questions/606191/convert-bytes-to-a-string')
 
 
-How to use - Getting exact results
-----------------------------------
+### Getting exact results
 
-Say we want to scrape stock live price from nasdaq:
-
-.. code:: python
+Say we want to scrape stock live prices from Nasdaq:
 
     from autoscraper import AutoScraper
 
@@ -87,9 +73,7 @@ Say we want to scrape stock live price from nasdaq:
     result = scraper.build(url, wanted_list)
     print(result)
     
-You can also pass any custom `requests` attributes. for example you may want to use proxies:
-
-.. code:: python
+You can also pass any custom `requests` module attribute. for example you may want to use proxies:
 
     proxies = {
         "http": 'http://127.0.0.1:8001',
@@ -100,20 +84,15 @@ You can also pass any custom `requests` attributes. for example you may want to 
     
 Now we can get the price of any nasdaq symbol:
 
-.. code:: python
-    
     scraper.get_result_exact('https://www.google.com/finance?oq=msft')
 
 
-How to use - Generating the scraper python code
------------------------------------------------
+### Generating the scraper python code
 
 We can generate a code for the built scraper to use it later:
 
-.. code:: python
-    
     scraper.generate_python_code()
 
 
 It will print the generated code. There's a class named `GeneratedAutoScraper` which has the methods `get_result_similar` and 
-`get_result_exact` which you can use. (or use `get_result` method to get both)
+`get_result_exact` which you can use. You can also use `get_result` method to get both.
