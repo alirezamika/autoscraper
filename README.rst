@@ -20,7 +20,7 @@ Install latest version from git repository using pip:
 
 .. code-block:: bash
 
-    $ pip install git+https://github.com/alirezamika/evostra.git
+    $ pip install git+https://github.com/alirezamika/autoscraper.git
 
 
 How to use - Getting similar results
@@ -91,7 +91,7 @@ You can also pass any custom `requests` attributes. for example you may want to 
         "http": 'http://127.0.0.1:8001',
         "https": 'https://127.0.0.1:8001',
     }
-    
+
     result = scraper.build(url, wanted_list, request_args=dict(proxies=proxies))
     
 Now we can get the price of any nasdaq symbol:
