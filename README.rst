@@ -42,9 +42,12 @@ Say we want to fetch all related post titles in a stackoverflow page:
     result = scraper.build(url, wanted_list)
     print(result)
 
+
 Here's the output:
 
-.. code::
+
+.. code:: python
+
     [
         'How do I merge two dictionaries in a single expression in Python (taking union of dictionaries)?', 
         'How to call an external command?', 
@@ -87,6 +90,7 @@ Say we want to scrape stock live price from nasdaq:
 You can also pass any custom `requests` attributes. for example you may want to use proxies:
 
 .. code:: python
+
     proxies = {
         "http": 'http://127.0.0.1:8001',
         "https": 'https://127.0.0.1:8001',

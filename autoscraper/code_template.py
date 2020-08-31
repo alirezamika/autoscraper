@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-class AutoScraper(object):
+class GeneratedAutoScraper(object):
     request_headers = {
         'User-Agent': 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; \
             Googlebot/2.1; +http://www.google.com/bot.html) Safari/537.36'
@@ -19,7 +19,7 @@ class AutoScraper(object):
         if html:
             return BeautifulSoup(html, 'lxml')
         request_args = request_args if request_args else {}
-        headers = request_args.get('headers', AutoScraper.request_headers)
+        headers = request_args.get('headers', GeneratedAutoScraper.request_headers)
         html = requests.get(url, headers=headers, **request_args).text
         return BeautifulSoup(html, 'lxml')
 
