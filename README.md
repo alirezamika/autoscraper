@@ -57,7 +57,7 @@ Now you can use the `scraper` object to get related topics of any stackoverflow 
 scraper.get_result_similar('https://stackoverflow.com/questions/606191/convert-bytes-to-a-string')
 ```
 
-### Getting exact results
+### Getting exact result
 
 Say we want to scrape stock live prices from Nasdaq:
 
@@ -75,7 +75,7 @@ result = scraper.build(url, wanted_list)
 print(result)
 ```
 
-You can also pass any custom `requests` module attribute. for example you may want to use proxies:
+You can also pass any custom `requests` module parameter. for example you may want to use proxies or custom headers:
 
 ```python
 proxies = {
