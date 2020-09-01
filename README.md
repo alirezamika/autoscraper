@@ -59,12 +59,12 @@ scraper.get_result_similar('https://stackoverflow.com/questions/606191/convert-b
 
 ### Getting exact result
 
-Say we want to scrape stock live prices from Nasdaq:
+Say we want to scrape live stock prices from yahoo finance:
 
 ```python
 from autoscraper import AutoScraper
 
-url = 'https://www.google.com/finance?oq=aapl'
+url = 'https://finance.yahoo.com/quote/AAPL/'
 
 wanted_list = ["124.81"]
 
@@ -86,10 +86,10 @@ proxies = {
 result = scraper.build(url, wanted_list, request_args=dict(proxies=proxies))
 ```
 
-Now we can get the price of any nasdaq symbol:
+Now we can get the price of any symbol:
 
 ```python
-scraper.get_result_exact('https://www.google.com/finance?oq=msft')
+scraper.get_result_exact('https://finance.yahoo.com/quote/MSFT/')
 ```
 
 ### Generating the scraper python code
