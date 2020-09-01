@@ -1,3 +1,4 @@
+import json
 import os
 from urllib.parse import urljoin
 import requests
@@ -13,6 +14,14 @@ class AutoScraper(object):
     def __init__(self, stack_list=None, url=None):
         self.stack_list = stack_list
         self.url = url
+
+    def save(self, file_path):
+        with open(file_path, 'w') as f:
+            f.write(json.dumps(self.stack_list))
+    
+    def load(self, file_path):
+        with open(file_path, 'r') as f:
+            self.stack_list = json.loads(f.read())
 
     @staticmethod
     def _get_soup(url=None, html=None, request_args=None):

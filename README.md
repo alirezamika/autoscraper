@@ -92,9 +92,24 @@ Now we can get the price of any symbol:
 scraper.get_result_exact('https://finance.yahoo.com/quote/MSFT/')
 ```
 
+### Saving the model
+
+We can now save the built model to use it later. To save:
+
+```python
+# Give it a file path
+scraper.save('yahoo-finance')
+```
+
+And to load:
+
+```python
+scraper.load('yahoo-finance')
+```
+
 ### Generating the scraper python code
 
-We can generate a code for the built scraper to use it later:
+We can also generate a stand-alone code for the learned scraper to use it anywhere:
 
 ```python
 scraper.generate_python_code()
