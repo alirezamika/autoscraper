@@ -92,6 +92,9 @@ Now we can get the price of any symbol:
 scraper.get_result_exact('https://finance.yahoo.com/quote/MSFT/')
 ```
 
+You may want to get other info as well. For example if you want to get market cap too, you can just append it to the wanted list. By using the `get_result_exact` method, it will retrive the data as the same exact order in the wanted list.
+
+
 ### Saving the model
 
 We can now save the built model to use it later. To save:
