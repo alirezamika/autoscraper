@@ -30,7 +30,7 @@ from autoscraper import AutoScraper
 url = 'https://stackoverflow.com/questions/2081586/web-scraping-with-python'
 
 # We can add one or multiple candidates here.
-# You can also put urls here to retrive urls.
+# You can also put urls here to retrieve urls.
 wanted_list = ["How to call an external command?"]
 
 scraper = AutoScraper()
@@ -92,7 +92,7 @@ Now we can get the price of any symbol:
 scraper.get_result_exact('https://finance.yahoo.com/quote/MSFT/')
 ```
 
-You may want to get other info as well. For example if you want to get market cap too, you can just append it to the wanted list. By using the `get_result_exact` method, it will retrive the data as the same exact order in the wanted list.
+You may want to get other info as well. For example if you want to get market cap too, you can just append it to the wanted list. By using the `get_result_exact` method, it will retrieve the data as the same exact order in the wanted list.
 
 
 ### Saving the model
@@ -115,7 +115,8 @@ scraper.load('yahoo-finance')
 We can also generate a stand-alone code for the learned scraper to use it anywhere:
 
 ```python
-scraper.generate_python_code()
+code = scraper.generate_python_code()
+print(code)
 ```
 
 It will print the generated code. There's a class named `GeneratedAutoScraper` which has the methods `get_result_similar` and 

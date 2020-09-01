@@ -210,4 +210,4 @@ class AutoScraper(object):
         with open(file_path, 'r') as f:
             code = f.read()
         code = code.replace('"{STACK_LIST}"', str(self.stack_list))
-        print(code)
+        return code
