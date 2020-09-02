@@ -1,4 +1,4 @@
-# AutoScraper: A Smart Automatic Scraper for Python
+# AutoScraper: A Smart, Fast and Lightweight Automatic Web Scraper for Python
 
 
 This project is made for automatic web scraping to make scraping easy. 
