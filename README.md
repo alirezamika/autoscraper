@@ -1,5 +1,6 @@
 # AutoScraper: A Smart, Fast and Lightweight Automatic Web Scraper for Python
 
+![img](https://user-images.githubusercontent.com/17881612/91964299-34e12f80-ed24-11ea-9623-2b119dca445e.jpg)
 
 This project is made for automatic web scraping to make scraping easy. 
 It gets a url or the html content of a web page and a list of sample data which we want to scrape from that page. It learns the scraping rules and returns the similar elements. Then you can use this learned object with new urls to get similar content or the exact same element of those new pages.
