@@ -7,7 +7,8 @@ from bs4 import BeautifulSoup
 
 class AutoScraper(object):
     request_headers = {
-        'User-Agent': 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 \
+            (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36',
         'accept': '*/*'
     }
 
@@ -18,7 +19,7 @@ class AutoScraper(object):
     def save(self, file_path):
         with open(file_path, 'w') as f:
             f.write(json.dumps(self.stack_list))
-    
+
     def load(self, file_path):
         with open(file_path, 'r') as f:
             self.stack_list = json.loads(f.read())
