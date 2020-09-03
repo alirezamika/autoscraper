@@ -1,4 +1,4 @@
-# AutoScraper: A Smart, Fast and Lightweight Automatic Web Scraper for Python
+# AutoScraper: A Smart, Automatic, Fast and Lightweight Web Scraper for Python
 
 ![img](https://user-images.githubusercontent.com/17881612/91968083-5ee92080-ed29-11ea-82ec-d99ec85367a5.png)
 
