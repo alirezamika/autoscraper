@@ -1,4 +1,4 @@
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -19,7 +19,10 @@ class GeneratedAutoScraper(object):
         if html:
             return BeautifulSoup(html, 'lxml')
         request_args = request_args if request_args else {}
-        headers = request_args.get('headers', GeneratedAutoScraper.request_headers)
+        headers = dict(GeneratedAutoScraper.request_headers)
+        if url:
+            headers['Host'] = urlparse(url).netloc
+        headers = request_args.get('headers', headers)
         html = requests.get(url, headers=headers, **request_args).text
         return BeautifulSoup(html, 'lxml')
 
@@ -34,6 +37,8 @@ class GeneratedAutoScraper(object):
     def _fetch_result_from_child(self, child, wanted_attr, is_full_url):
         if wanted_attr is None:
             return child.getText().strip().rstrip()
+        if wanted_attr not in child.attrs:
+            return None
         if is_full_url:
             return urljoin(self.url, child.attrs[wanted_attr])
         return child.attrs[wanted_attr]
@@ -79,8 +84,8 @@ class GeneratedAutoScraper(object):
         for stack in self.stack_list:
             try:
                 result.append(self._get_result_with_stack_index_based(stack, soup))
-            except IndexError as e:
-                print(e)
+            except IndexError:
+                continue
         return self.unique(result)
 
     def get_result(self, url=None, html=None, request_args=None):

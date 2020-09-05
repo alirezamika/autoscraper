@@ -1,6 +1,6 @@
 import json
 import os
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
@@ -8,8 +8,7 @@ from bs4 import BeautifulSoup
 class AutoScraper(object):
     request_headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 \
-            (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36',
-        'accept': '*/*'
+            (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36'
     }
 
     def __init__(self, stack_list=None, url=None):
@@ -29,7 +28,10 @@ class AutoScraper(object):
         if html:
             return BeautifulSoup(html, 'lxml')
         request_args = request_args if request_args else {}
-        headers = request_args.get('headers', AutoScraper.request_headers)
+        headers = dict(AutoScraper.request_headers)
+        if url:
+            headers['Host'] = urlparse(url).netloc
+        headers = request_args.get('headers', headers)
         html = requests.get(url, headers=headers, **request_args).text
         return BeautifulSoup(html, 'lxml')
 
@@ -145,6 +147,8 @@ class AutoScraper(object):
     def _fetch_result_from_child(self, child, wanted_attr, is_full_url):
         if wanted_attr is None:
             return child.getText().strip().rstrip()
+        if wanted_attr not in child.attrs:
+            return None
         if is_full_url:
             return urljoin(self.url, child.attrs[wanted_attr])
         return child.attrs[wanted_attr]
@@ -196,8 +200,8 @@ class AutoScraper(object):
             try:
                 result.append(
                     self._get_result_with_stack_index_based(stack, soup))
-            except IndexError as e:
-                print(e)
+            except IndexError:
+                continue
         return self.unique(result)
 
     def get_result(self, url=None, html=None, request_args=None):
@@ -207,6 +211,8 @@ class AutoScraper(object):
         return similar, exact
 
     def generate_python_code(self):
+        # deprecated
+        print('This function is deprecated. Please use save() and load() instead.')
         file_path = os.path.join(os.path.dirname(__file__), "code_template.py")
         with open(file_path, 'r') as f:
             code = f.read()
