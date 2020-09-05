@@ -14,20 +14,20 @@ class GeneratedAutoScraper(object):
         self.url = ''
         self.stack_list = "{STACK_LIST}"
 
-    @staticmethod
+    @classmethod
     def _get_soup(url=None, html=None, request_args=None):
         if html:
             return BeautifulSoup(html, 'lxml')
         request_args = request_args if request_args else {}
-        headers = dict(GeneratedAutoScraper.request_headers)
+        headers = dict(cls.request_headers)
         if url:
             headers['Host'] = urlparse(url).netloc
         headers = request_args.get('headers', headers)
         html = requests.get(url, headers=headers, **request_args).text
         return BeautifulSoup(html, 'lxml')
 
-    @staticmethod
-    def unique(item_list):
+    @classmethod
+    def unique(cls, item_list):
         unique_list = []
         for item in item_list:
             if item not in unique_list:

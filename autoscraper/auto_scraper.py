@@ -1,8 +1,9 @@
-import json
 import os
-from urllib.parse import urljoin, urlparse
+import json
+
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin, urlparse
 
 
 class AutoScraper(object):
@@ -23,20 +24,20 @@ class AutoScraper(object):
         with open(file_path, 'r') as f:
             self.stack_list = json.load(f)
 
-    @staticmethod
-    def _get_soup(url=None, html=None, request_args=None):
+    @classmethod
+    def _get_soup(cls, url=None, html=None, request_args=None):
         if html:
             return BeautifulSoup(html, 'lxml')
         request_args = request_args if request_args else {}
-        headers = dict(AutoScraper.request_headers)
+        headers = dict(cls.request_headers)
         if url:
             headers['Host'] = urlparse(url).netloc
         headers = request_args.get('headers', headers)
         html = requests.get(url, headers=headers, **request_args).text
         return BeautifulSoup(html, 'lxml')
 
-    @staticmethod
-    def _get_valid_attrs(item):
+    @classmethod
+    def _get_valid_attrs(cls, item):
         attrs = dict(item.attrs)
         for attr in item.attrs:
             if attr not in {'class', 'style'}:
@@ -76,8 +77,8 @@ class AutoScraper(object):
             filter(lambda x: self._child_has_text(x, text), children))
         return children
 
-    @staticmethod
-    def unique(item_list):
+    @classmethod
+    def unique(cls, item_list):
         unique_list = []
         for item in item_list:
             if item not in unique_list:
@@ -107,16 +108,16 @@ class AutoScraper(object):
 
         return None
 
-    @staticmethod
-    def _check_result(result, wanted_list):
+    @classmethod
+    def _check_result(cls, result, wanted_list):
         for w in wanted_list:
             if w not in result:
                 return False
         return True
 
-    @staticmethod
-    def _build_stack(child):
-        content = [(child.name, AutoScraper._get_valid_attrs(child))]
+    @classmethod
+    def _build_stack(cls, child):
+        content = [(child.name, cls._get_valid_attrs(child))]
 
         parent = child
         while True:
@@ -127,7 +128,7 @@ class AutoScraper(object):
             for i, c in enumerate(grand_parent.findAll(parent.name, recursive=False)):
                 if c == parent:
                     content.insert(
-                        0, (grand_parent.name, AutoScraper._get_valid_attrs(grand_parent), i))
+                        0, (grand_parent.name, cls._get_valid_attrs(grand_parent), i))
                     break
             if grand_parent.name == 'html':
                 break
@@ -140,7 +141,7 @@ class AutoScraper(object):
         return stack
 
     def _get_result_for_child(self, child, soup):
-        stack = AutoScraper._build_stack(child)
+        stack = self._build_stack(child)
         result = self._get_result_with_stack(stack, soup)
         return result, stack
 
