@@ -17,11 +17,11 @@ class AutoScraper(object):
 
     def save(self, file_path):
         with open(file_path, 'w') as f:
-            f.write(json.dumps(self.stack_list))
+            json.dump(self.stack_list, f)
 
     def load(self, file_path):
         with open(file_path, 'r') as f:
-            self.stack_list = json.loads(f.read())
+            self.stack_list = json.load(f)
 
     @staticmethod
     def _get_soup(url=None, html=None, request_args=None):
