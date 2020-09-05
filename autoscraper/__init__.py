@@ -1,1 +1,1 @@
-from autoscraper.auto_scraper import AutoScraper
+from .auto_scraper import AutoScraper
