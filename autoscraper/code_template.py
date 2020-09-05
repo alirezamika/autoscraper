@@ -40,7 +40,7 @@ class GeneratedAutoScraper(object):
 
     def _fetch_result_from_child(self, child, wanted_attr, is_full_url):
         if wanted_attr is None:
-            return child.getText().strip().rstrip()
+            return child.getText().strip()
 
         if wanted_attr not in child.attrs:
             return None
