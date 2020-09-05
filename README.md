@@ -95,7 +95,7 @@ scraper.get_result_exact('https://finance.yahoo.com/quote/MSFT/')
 
 **You may want to get other info as well.** For example if you want to get market cap too, you can just append it to the wanted list. By using the `get_result_exact` method, it will retrieve the data as the same exact order in the wanted list.
 
-**Another example:** Say we want to scrape the About text, number of stars and the link to pull requests of Github repo pages:
+**Another example:** Say we want to scrape the about text, number of stars and the link to pull requests of Github repo pages:
 
 ```python
 url = 'https://github.com/alirezamika/autoscraper'
@@ -123,14 +123,4 @@ And to load:
 scraper.load('yahoo-finance')
 ```
 
-### Generating the scraper python code
-
-We can also generate a stand-alone code for the learned scraper to use it anywhere:
-
-```python
-code = scraper.generate_python_code()
-print(code)
-```
-
-It will print the generated code. There's a class named `GeneratedAutoScraper` which has the methods `get_result_similar` and 
-`get_result_exact` which you can use. You can also use `get_result` method to get both.
+#### Happy Coding  ♥️
