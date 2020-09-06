@@ -1,5 +1,6 @@
 import os
 import json
+from functools import reduce
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -78,12 +79,7 @@ class AutoScraper(object):
 
     @classmethod
     def unique(cls, item_list):
-        unique_list = []
-        for item in item_list:
-            if item not in unique_list:
-                unique_list.append(item)
-
-        return unique_list
+        return list(set(item_list))
 
     def build(self, url=None, wanted_list=None, html=None, request_args={}):
         self.url = url
