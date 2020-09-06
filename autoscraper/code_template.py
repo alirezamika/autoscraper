@@ -3,6 +3,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
+from autoscraper.utils import unique
 
 class GeneratedAutoScraper(object):
     request_headers = {
@@ -29,15 +30,6 @@ class GeneratedAutoScraper(object):
         html = requests.get(url, headers=headers, **request_args).text
 
         return BeautifulSoup(html, 'lxml')
-
-    @classmethod
-    def unique(cls, item_list):
-        unique_list = []
-        for item in item_list:
-            if item not in unique_list:
-                unique_list.append(item)
-
-        return unique_list
 
     def _fetch_result_from_child(self, child, wanted_attr, is_full_url):
         if wanted_attr is None:
@@ -87,7 +79,7 @@ class GeneratedAutoScraper(object):
         for stack in self.stack_list:
             result += self._get_result_with_stack(stack, soup)
 
-        return self.unique(result)
+        return unique(result)
 
     def get_result_exact(self, url=None, html=None, soup=None, request_args=None):
         if url:
@@ -104,7 +96,7 @@ class GeneratedAutoScraper(object):
             except IndexError:
                 continue
 
-        return self.unique(result)
+        return unique(result)
 
     def get_result(self, url=None, html=None, request_args=None):
         soup = self._get_soup(url=url, html=html, request_args=request_args)
