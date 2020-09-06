@@ -78,11 +78,7 @@ class AutoScraper(object):
 
     @staticmethod
     def unique(item_list):
-        unique_list = []
-        for item in item_list:
-            if item not in unique_list:
-                unique_list.append(item)
-        return unique_list
+        return list(dict.fromkeys(item_list))
 
     def build(self, url=None, wanted_list=None, html=None, request_args=None):
         self.url = url
