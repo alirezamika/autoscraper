@@ -40,16 +40,9 @@ class AutoScraper(object):
 
     @classmethod
     def _get_valid_attrs(cls, item):
-        attrs = dict(item.attrs)
-        for attr in item.attrs:
-            if attr not in {'class', 'style'}:
-                del attrs[attr]
-                continue
-
-            if attrs[attr] == []:
-                attrs[attr] = ''
-
-        return attrs
+        return {
+            k: v or '' for k, v in item.attrs if k in {'class', 'style'}
+        }
 
     def _child_has_text(self, child, text):
         child_text = child.getText().strip()
