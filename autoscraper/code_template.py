@@ -16,7 +16,7 @@ class GeneratedAutoScraper(object):
         self.stack_list = "{STACK_LIST}"
 
     @classmethod
-    def _get_soup(url=None, html=None, request_args=None):
+    def _get_soup(cls, url=None, html=None, request_args=None):
         request_args = request_args or {}
 
         if html:
