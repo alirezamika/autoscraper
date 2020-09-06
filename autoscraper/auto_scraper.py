@@ -28,7 +28,7 @@ class AutoScraper(object):
 
     @classmethod
     def _get_soup(cls, url=None, html=None, request_args=None):
-        request_args = request_args if request_args else {}
+        request_args = request_args or {}
 
         if html:
             return BeautifulSoup(html, 'lxml')
