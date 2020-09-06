@@ -15,11 +15,10 @@ class GeneratedAutoScraper(object):
         self.stack_list = "{STACK_LIST}"
 
     @classmethod
-    def _get_soup(url=None, html=None, request_args=None):
+    def _get_soup(url=None, html=None, request_args={}):
         if html:
             return BeautifulSoup(html, 'lxml')
 
-        request_args = request_args if request_args else {}
         headers = dict(cls.request_headers)
         if url:
             headers['Host'] = urlparse(url).netloc
@@ -75,7 +74,7 @@ class GeneratedAutoScraper(object):
         result = self._fetch_result_from_child(p, stack['wanted_attr'], stack['is_full_url'])
         return result
 
-    def get_result_similar(self, url=None, html=None, soup=None, request_args=None):
+    def get_result_similar(self, url=None, html=None, soup=None, request_args={}):
         if url:
             self.url = url
 
@@ -88,7 +87,7 @@ class GeneratedAutoScraper(object):
 
         return self.unique(result)
 
-    def get_result_exact(self, url=None, html=None, soup=None, request_args=None):
+    def get_result_exact(self, url=None, html=None, soup=None, request_args={}):
         if url:
             self.url = url
 
@@ -105,7 +104,7 @@ class GeneratedAutoScraper(object):
 
         return self.unique(result)
 
-    def get_result(self, url=None, html=None, request_args=None):
+    def get_result(self, url=None, html=None, request_args={}):
         soup = self._get_soup(url=url, html=html, request_args=request_args)
         similar = self.get_result_similar(soup=soup)
         exact = self.get_result_exact(soup=soup)
