@@ -1,6 +1,5 @@
 import os
 import json
-from functools import reduce
 from urllib.parse import urljoin, urlparse
 
 import requests
