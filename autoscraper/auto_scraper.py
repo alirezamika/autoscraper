@@ -6,6 +6,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
+from autoscraper.utils import forall, unique
 
 class AutoScraper(object):
     request_headers = {
@@ -26,7 +27,9 @@ class AutoScraper(object):
             self.stack_list = json.load(f)
 
     @classmethod
-    def _get_soup(cls, url=None, html=None, request_args={}):
+    def _get_soup(cls, url=None, html=None, request_args=None):
+        request_args = request_args if request_args else {}
+
         if html:
             return BeautifulSoup(html, 'lxml')
 
@@ -42,7 +45,7 @@ class AutoScraper(object):
     @classmethod
     def _get_valid_attrs(cls, item):
         return {
-            k: v or '' for k, v in item.attrs if k in {'class', 'style'}
+            k: v if v is not None else '' for k, v in item.attrs if k in {'class', 'style'}
         }
 
     def _child_has_text(self, child, text):
@@ -77,11 +80,7 @@ class AutoScraper(object):
 
         return children
 
-    @classmethod
-    def unique(cls, item_list):
-        return list(set(item_list))
-
-    def build(self, url=None, wanted_list=None, html=None, request_args={}):
+    def build(self, url=None, wanted_list=None, html=None, request_args=None):
         self.url = url
         soup = self._get_soup(url=url, html=html, request_args=request_args)
 
@@ -96,21 +95,13 @@ class AutoScraper(object):
                 result_list += result
                 stack_list.append(stack)
 
-        result_list = self.unique(result_list)
+        result_list = unique(result_list)
 
-        if self._check_result(result_list, wanted_list):
-            self.stack_list = self.unique(stack_list)
+        if forall(lambda x: x in wanted_list, result_list):
+            self.stack_list = unique(stack_list)
             return result_list
 
         return None
-
-    @classmethod
-    def _check_result(cls, result, wanted_list):
-        for w in wanted_list:
-            if w not in result:
-                return False
-
-        return True
 
     @classmethod
     def _build_stack(cls, child):
@@ -199,9 +190,9 @@ class AutoScraper(object):
         for stack in self.stack_list:
             result += self._get_result_with_stack(stack, soup)
 
-        return self.unique(result)
+        return unique(result)
 
-    def get_result_exact(self, url=None, html=None, soup=None, request_args={}):
+    def get_result_exact(self, url=None, html=None, soup=None, request_args=None):
         if url:
             self.url = url
 
@@ -218,9 +209,9 @@ class AutoScraper(object):
             except IndexError:
                 continue
 
-        return self.unique(result)
+        return unique(result)
 
-    def get_result(self, url=None, html=None, request_args={}):
+    def get_result(self, url=None, html=None, request_args=None):
         soup = self._get_soup(url=url, html=html, request_args=request_args)
         similar = self.get_result_similar(soup=soup)
         exact = self.get_result_exact(soup=soup)
