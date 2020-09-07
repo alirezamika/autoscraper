@@ -1,5 +1,4 @@
 import json
-import os
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -75,9 +74,7 @@ class AutoScraper(object):
     def _get_children(self, soup, text):
         text = text.strip()
         children = reversed(soup.findChildren())
-        children = list(
-            filter(lambda x: self._child_has_text(x, text), children))
-
+        children = list(filter(lambda x: self._child_has_text(x, text), children))
         return children
 
     def build(self, url=None, wanted_list=None, html=None, request_args=None):
@@ -126,15 +123,12 @@ class AutoScraper(object):
 
         wanted_attr = getattr(child, 'wanted_attr', None)
         is_full_url = getattr(child, 'is_full_url', False)
-        stack = dict(content=content, wanted_attr=wanted_attr,
-                     is_full_url=is_full_url)
-
+        stack = dict(content=content, wanted_attr=wanted_attr, is_full_url=is_full_url)
         return stack
 
     def _get_result_for_child(self, child, soup):
         stack = self._build_stack(child)
         result = self._get_result_with_stack(stack, soup)
-
         return result, stack
 
     def _fetch_result_from_child(self, child, wanted_attr, is_full_url):
@@ -160,22 +154,17 @@ class AutoScraper(object):
 
         wanted_attr = stack['wanted_attr']
         is_full_url = stack['is_full_url']
-        result = [self._fetch_result_from_child(
-            i, wanted_attr, is_full_url) for i in parents]
+        result = [self._fetch_result_from_child(i, wanted_attr, is_full_url) for i in parents]
         result = list(filter(lambda x: x, result))
-
         return result
 
     def _get_result_with_stack_index_based(self, stack, soup):
         p = soup.findChildren(recursive=False)[0]
         stack_content = stack['content']
         for index, item in enumerate(stack_content[:-1]):
-            p = p.findAll(stack_content[index + 1]
-                          [0], recursive=False)[item[2]]
+            p = p.findAll(stack_content[index + 1][0], recursive=False)[item[2]]
 
-        result = self._fetch_result_from_child(
-            p, stack['wanted_attr'], stack['is_full_url'])
-
+        result = self._fetch_result_from_child(p, stack['wanted_attr'], stack['is_full_url'])
         return result
 
     def get_result_similar(self, url=None, html=None, soup=None, request_args=None):
@@ -183,13 +172,11 @@ class AutoScraper(object):
             self.url = url
 
         if not soup:
-            soup = self._get_soup(url=url, html=html,
-                                  request_args=request_args)
+            soup = self._get_soup(url=url, html=html, request_args=request_args)
 
         result = []
         for stack in self.stack_list:
             result += self._get_result_with_stack(stack, soup)
-
         return unique(result)
 
     def get_result_exact(self, url=None, html=None, soup=None, request_args=None):
@@ -197,14 +184,12 @@ class AutoScraper(object):
             self.url = url
 
         if not soup:
-            soup = self._get_soup(url=url, html=html,
-                                  request_args=request_args)
+            soup = self._get_soup(url=url, html=html, request_args=request_args)
 
         result = []
         for stack in self.stack_list:
             try:
-                result.append(
-                    self._get_result_with_stack_index_based(stack, soup))
+                result.append(self._get_result_with_stack_index_based(stack, soup))
 
             except IndexError:
                 continue
@@ -215,16 +200,8 @@ class AutoScraper(object):
         soup = self._get_soup(url=url, html=html, request_args=request_args)
         similar = self.get_result_similar(soup=soup)
         exact = self.get_result_exact(soup=soup)
-
         return similar, exact
 
     def generate_python_code(self):
         # deprecated
         print('This function is deprecated. Please use save() and load() instead.')
-        file_path = os.path.join(os.path.dirname(__file__), "code_template.py")
-        with open(file_path, 'r') as f:
-            code = f.read()
-
-        code = code.replace('"{STACK_LIST}"', str(self.stack_list))
-
-        return code
