@@ -5,7 +5,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from autoscraper.utils import forall, unique
+from autoscraper.utils import unique
 
 class AutoScraper(object):
     request_headers = {
