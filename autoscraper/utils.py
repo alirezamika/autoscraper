@@ -6,9 +6,3 @@ def unique(lst):
 
     return unique_lst
 
-def forall(fn, lst):
-    for item in lst:
-        if not fn(lst):
-            return False
-
-    return True

@@ -96,7 +96,7 @@ class AutoScraper(object):
 
         result_list = unique(result_list)
 
-        if forall(lambda x: x in wanted_list, result_list):
+        if all(item in wanted_list for all item in result_list):
             self.stack_list = unique(stack_list)
             return result_list
 
