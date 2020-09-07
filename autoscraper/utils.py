@@ -1,10 +1,10 @@
-def unique(lst):
-    unique_lst = []
-    for item in lst:
-        if item not in unique_lst:
-            unique_lst.append(item)
+def unique(item_list):	
+    unique_list = []	
+    for item in item_list:	
+        if item not in unique_list:	
+            unique_list.append(item)	
+    return unique_list
 
-    return unique_lst
 
 def forall(fn, lst):
     for item in lst:
