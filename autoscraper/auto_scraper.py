@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 
 from autoscraper.utils import unique
 
+
 class AutoScraper(object):
     request_headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 \
@@ -41,10 +42,10 @@ class AutoScraper(object):
 
         return BeautifulSoup(html, 'lxml')
 
-    @classmethod
-    def _get_valid_attrs(cls, item):
+    @staticmethod
+    def _get_valid_attrs(item):
         return {
-            k: v if v is not None else '' for k, v in item.attrs if k in {'class', 'style'}
+            k: v if v is not [] else '' for k, v in item.attrs.items() if k in {'class', 'style'}
         }
 
     def _child_has_text(self, child, text):
@@ -96,7 +97,7 @@ class AutoScraper(object):
 
         result_list = unique(result_list)
 
-        if all(item in wanted_list for all item in result_list):
+        if all(w in result_list for w in wanted_list):
             self.stack_list = unique(stack_list)
             return result_list
 
