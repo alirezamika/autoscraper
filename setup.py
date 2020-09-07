@@ -12,7 +12,8 @@ setup(
 
     version='1.0.0',
 
-    description='Smart Automatic Scraper in Python',
+    description='A Smart, Automatic, Fast and Lightweight Web Scraper for Python',
+    long_description_content_type="text/markdown",
     long_description=long_description,
 
     url='https://github.com/alirezamika/autoscraper',
