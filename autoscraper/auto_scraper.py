@@ -45,7 +45,7 @@ class AutoScraper(object):
     @staticmethod
     def _get_valid_attrs(item):
         return {
-            k: v if v is not [] else '' for k, v in item.attrs.items() if k in {'class', 'style'}
+            k: v if v != [] else '' for k, v in item.attrs.items() if k in {'class', 'style'}
         }
 
     def _child_has_text(self, child, text):
