@@ -120,7 +120,9 @@ class AutoScraper(object):
             if not grand_parent:
                 break
 
-            for i, c in enumerate(grand_parent.findAll(parent.name, cls._get_valid_attrs(parent), recursive=False)):
+            children = grand_parent.findAll(parent.name, cls._get_valid_attrs(parent),
+                                                         recursive=False)
+            for i, c in enumerate(children):
                 if c == parent:
                     content.insert(
                         0, (grand_parent.name, cls._get_valid_attrs(grand_parent), i))
