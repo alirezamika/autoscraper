@@ -46,7 +46,8 @@ class AutoScraper(object):
         if url:
             headers['Host'] = urlparse(url).netloc
 
-        headers = request_args.get('headers', headers)
+        user_headers = request_args.pop('headers', {})
+        headers.update(user_headers)
         html = requests.get(url, headers=headers, **request_args).text
 
         return BeautifulSoup(html, 'lxml')
