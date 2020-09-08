@@ -149,6 +149,10 @@ The result:
 ]
 ```
 As we can see we have one extra item here. We can run the `get_result_exact` or `get_result_similar` method with `grouped=True` parameter. It will group all results per its scraping rule:
+
+```python
+scraper.get_result_exact('https://www.ebay.com/itm/Acer-Predator-Helios-300-15-6-144Hz-FHD-Laptop-i7-9750H-16GB-512GB-GTX-1660-Ti/114183725523', grouped=True) 
+```
  
 Output:
 ```python
