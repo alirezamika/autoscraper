@@ -123,5 +123,8 @@ And to load:
 scraper.load('yahoo-finance')
 ```
 
-Check out [here](https://gist.github.com/alirezamika/72083221891eecd991bbc0a2a2467673) for more advanced usages.
+**See [here](https://gist.github.com/alirezamika/72083221891eecd991bbc0a2a2467673) for more advanced usages.**
+
+<a href="https://www.buymeacoffee.com/alirezam" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+
 #### Happy Coding  ♥️
