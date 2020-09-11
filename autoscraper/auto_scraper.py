@@ -1,3 +1,4 @@
+import hashlib
 import json
 from collections import defaultdict
 from urllib.parse import urljoin, urlparse
@@ -5,7 +6,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from autoscraper.utils import unique, get_random_str
+from autoscraper.utils import get_random_str, unique_hashable, unique_stack_list
 
 
 class AutoScraper(object):
@@ -16,8 +17,6 @@ class AutoScraper(object):
 
     Attributes
     ----------
-    url: str
-        Url of the web page being scraped
     stack_list: list
         List of rules learned by AutoScraper
 
@@ -25,11 +24,11 @@ class AutoScraper(object):
     -------
     build() - Learns a set of rules represented as stack_list based on the wanted_list,
         which can be reused for scraping similar elements from other web pages in the future.
-    get_result_similar() - Gets similar results based on the previously learned stack_list.
-    get_result_exact() - Gets exact results based on the previously learned stack_list.
-    get_results() - Gets exact and similar results based on the previously learned stack_list.
-    save() - Serializes the stack_list and url as JSON and saves it to disk.
-    load() - De-serializes the JSON representation of the stack_list and the url and loads it back.
+    get_result_similar() - Gets similar results based on the previously learned rules.
+    get_result_exact() - Gets exact results based on the previously learned rules.
+    get_results() - Gets exact and similar results based on the previously learned rules.
+    save() - Serializes the stack_list as JSON and saves it to disk.
+    load() - De-serializes the JSON representation of the stack_list and loads it back.
     remove_rules() - Removes one or more learned rule[s] from the stack_list.
     keep_rules() - Keeps only the specified learned rules in the stack_list and removes the others.
     """
@@ -39,17 +38,16 @@ class AutoScraper(object):
             (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36'
     }
 
-    def __init__(self, stack_list=None, url=None):
-        self.stack_list = stack_list
-        self.url = url
+    def __init__(self, stack_list=None):
+        self.stack_list = stack_list or []
 
     def save(self, file_path):
         """
-        Serializes the stack_list and url as JSON and saves it to the disk.
+        Serializes the stack_list as JSON and saves it to the disk.
 
         Parameters
         ----------
-        file_path : str
+        file_path: str
             Path of the JSON output
 
         Returns
@@ -57,18 +55,18 @@ class AutoScraper(object):
         None
         """
 
-        data = dict(url=self.url, stack_list=self.stack_list)
+        data = dict(stack_list=self.stack_list)
         with open(file_path, 'w') as f:
             json.dump(data, f)
 
     def load(self, file_path):
         """
-        De-serializes the JSON representation of the stack_list and the url and loads it back.
+        De-serializes the JSON representation of the stack_list and loads it back.
 
         Parameters
         ----------
-        file_path : str
-            Path of the JSON file to load stack_list and url from.
+        file_path: str
+            Path of the JSON file to load stack_list from.
 
         Returns
         -------
@@ -84,7 +82,6 @@ class AutoScraper(object):
             return
 
         self.stack_list = data['stack_list']
-        self.url = data['url']
 
     @classmethod
     def _get_soup(cls, url=None, html=None, request_args=None):
@@ -109,7 +106,8 @@ class AutoScraper(object):
             k: v if v != [] else '' for k, v in item.attrs.items() if k in {'class', 'style'}
         }
 
-    def _child_has_text(self, child, text):
+    @staticmethod
+    def _child_has_text(child, text, url):
         child_text = child.getText().strip()
         if text == child_text:
             child.wanted_attr = None
@@ -125,7 +123,7 @@ class AutoScraper(object):
                 return True
 
             if key in {'href', 'src'}:
-                full_url = urljoin(self.url, value)
+                full_url = urljoin(url, value)
                 if text == full_url:
                     child.wanted_attr = key
                     child.is_full_url = True
@@ -133,62 +131,68 @@ class AutoScraper(object):
 
         return False
 
-    def _get_children(self, soup, text):
+    def _get_children(self, soup, text, url):
         text = text.strip()
         children = reversed(soup.findChildren())
-        children = [x for x in children if self._child_has_text(x, text)]
+        children = [x for x in children if self._child_has_text(x, text, url)]
         return children
 
-    def build(self, url=None, wanted_list=None, html=None, request_args=None):
+    def build(self, url=None, wanted_list=None, html=None, request_args=None, update=True):
         """
         Automatically constructs a set of rules to scrape the specified target[s] from a web page.
             The rules are represented as stack_list.
 
         Parameters:
         ----------
-        url : str, optional
-            URL of the target web page. You should either pass url or html.
-        wanted_list : list, optional
+        url: str, optional
+            URL of the target web page. You should either pass url or html or both.
+
+        wanted_list: list, optional
             A list of needed contents to be scraped.
                 AutoScraper learns a set of rules to scrape these targets.
 
-        html : str, optional
+        html: str, optional
             An HTML string can also be passed instead of URL.
-                You should either pass url or html.
+                You should either pass url or html or both.
 
-        request_args : dict, optional
+        request_args: dict, optional
             A dictionary used to specify a set of additional request parameters used by requests
                 module. You can specify proxy URLs, custom headers etc.
+
+        update: bool, optional, defaults to True
+            If True, new learned rules will be added to the previous ones.
+            If False, all previously learned rules will be removed.
 
         Returns:
         --------
         None
         """
 
-        self.url = url
         soup = self._get_soup(url=url, html=html, request_args=request_args)
 
         result_list = []
-        stack_list = []
+
+        if update is False:
+            self.stack_list = []
 
         for wanted in wanted_list:
-            children = self._get_children(soup, wanted)
+            children = self._get_children(soup, wanted, url)
 
             for child in children:
-                result, stack = self._get_result_for_child(child, soup)
+                result, stack = self._get_result_for_child(child, soup, url)
                 result_list += result
-                stack_list.append(stack)
+                self.stack_list.append(stack)
 
-        result_list = unique(result_list)
+        result_list = unique_hashable(result_list)
 
         if all(w in result_list for w in wanted_list):
-            self.stack_list = unique(stack_list)
+            self.stack_list = unique_stack_list(self.stack_list)
             return result_list
 
         return None
 
     @classmethod
-    def _build_stack(cls, child):
+    def _build_stack(cls, child, url):
         content = [(child.name, cls._get_valid_attrs(child))]
 
         parent = child
@@ -213,15 +217,18 @@ class AutoScraper(object):
         wanted_attr = getattr(child, 'wanted_attr', None)
         is_full_url = getattr(child, 'is_full_url', False)
         stack = dict(content=content, wanted_attr=wanted_attr, is_full_url=is_full_url)
+        stack['url'] = url if is_full_url else ''
+        stack['hash'] = hashlib.sha256(str(stack).encode('utf-8')).hexdigest()
         stack['stack_id'] = 'rule_' + get_random_str(4)
         return stack
 
-    def _get_result_for_child(self, child, soup):
-        stack = self._build_stack(child)
-        result = self._get_result_with_stack(stack, soup)
+    def _get_result_for_child(self, child, soup, url):
+        stack = self._build_stack(child, url)
+        result = self._get_result_with_stack(stack, soup, url)
         return result, stack
 
-    def _fetch_result_from_child(self, child, wanted_attr, is_full_url):
+    @staticmethod
+    def _fetch_result_from_child(child, wanted_attr, is_full_url, url):
         if wanted_attr is None:
             return child.getText().strip()
 
@@ -229,11 +236,11 @@ class AutoScraper(object):
             return None
 
         if is_full_url:
-            return urljoin(self.url, child.attrs[wanted_attr])
+            return urljoin(url, child.attrs[wanted_attr])
 
         return child.attrs[wanted_attr]
 
-    def _get_result_with_stack(self, stack, soup):
+    def _get_result_with_stack(self, stack, soup, url):
         parents = [soup]
         for _, item in enumerate(stack['content']):
             children = []
@@ -244,11 +251,11 @@ class AutoScraper(object):
 
         wanted_attr = stack['wanted_attr']
         is_full_url = stack['is_full_url']
-        result = [self._fetch_result_from_child(i, wanted_attr, is_full_url) for i in parents]
+        result = [self._fetch_result_from_child(i, wanted_attr, is_full_url, url) for i in parents]
         result = [x for x in result if x]
         return result
 
-    def _get_result_with_stack_index_based(self, stack, soup):
+    def _get_result_with_stack_index_based(self, stack, soup, url):
         p = soup.findChildren(recursive=False)[0]
         stack_content = stack['content']
         for index, item in enumerate(stack_content[:-1]):
@@ -259,21 +266,21 @@ class AutoScraper(object):
             idx = min(len(p) - 1, item[2])
             p = p[idx]
 
-        result = [self._fetch_result_from_child(p, stack['wanted_attr'], stack['is_full_url'])]
+        result = [self._fetch_result_from_child(p, stack['wanted_attr'], stack['is_full_url'], url)]
         result = [x for x in result if x]
         return result
 
     def _get_result_by_func(self, func, url, html, soup, request_args, grouped):
-        if url:
-            self.url = url
-
         if not soup:
             soup = self._get_soup(url=url, html=html, request_args=request_args)
 
         result_list = []
         grouped_result = defaultdict(list)
         for stack in self.stack_list:
-            result = func(stack, soup)
+            if not url:
+                url = stack.get('url', '')
+
+            result = func(stack, soup, url)
 
             if not grouped:
                 result_list += result
@@ -282,20 +289,98 @@ class AutoScraper(object):
             stack_id = stack['stack_id']
             grouped_result[stack_id] += result
 
-        return dict(grouped_result) if grouped else unique(result_list)
+        return dict(grouped_result) if grouped else unique_hashable(result_list)
 
     def get_result_similar(self, url=None, html=None, soup=None, request_args=None, grouped=False):
+        """
+        Gets similar results based on the previously learned rules.
+
+        Parameters:
+        ----------
+        url: str, optional
+            URL of the target web page. You should either pass url or html or both.
+
+        html: str, optional
+            An HTML string can also be passed instead of URL.
+                You should either pass url or html or both.
+
+        request_args: dict, optional
+            A dictionary used to specify a set of additional request parameters used by requests
+                module. You can specify proxy URLs, custom headers etc.
+
+        grouped: bool, optional, defaults to False
+            If set to True, the result will be a dictionary with the rule_ids as keys
+                and a list of scraped data per rule as values.
+
+        Returns:
+        --------
+        List of similar results scraped from the web page.
+        Dictionary if grouped=True.
+        """
+
         func = self._get_result_with_stack
         return self._get_result_by_func(func, url, html, soup, request_args, grouped)
 
     def get_result_exact(self, url=None, html=None, soup=None, request_args=None, grouped=False):
+        """
+        Gets exact results based on the previously learned rules.
+
+        Parameters:
+        ----------
+        url: str, optional
+            URL of the target web page. You should either pass url or html or both.
+
+        html: str, optional
+            An HTML string can also be passed instead of URL.
+                You should either pass url or html or both.
+
+        request_args: dict, optional
+            A dictionary used to specify a set of additional request parameters used by requests
+                module. You can specify proxy URLs, custom headers etc.
+
+        grouped: bool, optional, defaults to False
+            If set to True, the result will be a dictionary with the rule_ids as keys
+                and a list of scraped data per rule as values.
+
+        Returns:
+        --------
+        List of exact results scraped from the web page.
+        Dictionary if grouped=True.
+        """
+
         func = self._get_result_with_stack_index_based
         return self._get_result_by_func(func, url, html, soup, request_args, grouped)
 
-    def get_result(self, url=None, html=None, request_args=None):
+    def get_result(self, url=None, html=None, request_args=None, grouped=False):
+        """
+        Gets similar and exact results based on the previously learned rules.
+
+        Parameters:
+        ----------
+        url: str, optional
+            URL of the target web page. You should either pass url or html or both.
+
+        html: str, optional
+            An HTML string can also be passed instead of URL.
+                You should either pass url or html or both.
+
+        request_args: dict, optional
+            A dictionary used to specify a set of additional request parameters used by requests
+                module. You can specify proxy URLs, custom headers etc.
+
+        grouped: bool, optional, defaults to False
+            If set to True, the result will be dictionaries with the rule_ids as keys
+                and a list of scraped data per rule as values.
+
+        Returns:
+        --------
+        Pair of (similar, exact) results.
+        See get_result_similar and get_result_exact methods.
+        """
+
         soup = self._get_soup(url=url, html=html, request_args=request_args)
-        similar = self.get_result_similar(soup=soup)
-        exact = self.get_result_exact(soup=soup)
+        similar = self.get_result_similar(url=url, soup=soup, grouped=grouped)
+        exact = self.get_result_exact(url=url, soup=soup, grouped=grouped)
         return similar, exact
 
     def remove_rules(self, rules):

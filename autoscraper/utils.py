@@ -1,13 +1,23 @@
+from collections import OrderedDict
+
 import random
 import string
 
 
-def unique(item_list):
+def unique_stack_list(stack_list):
+    seen = set()
     unique_list = []
-    for item in item_list:
-        if item not in unique_list:
-            unique_list.append(item)
+    for stack in stack_list:
+        stack_hash = stack['hash']
+        if stack_hash in seen:
+            continue
+        unique_list.append(stack)
+        seen.add(stack_hash)
     return unique_list
+
+def unique_hashable(hashable_items):
+    """Removes duplicates from the list. Must preserve the orders."""
+    return list(OrderedDict.fromkeys(hashable_items))
 
 def get_random_str(n):
     chars = string.ascii_lowercase + string.digits
