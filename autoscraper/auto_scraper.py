@@ -26,9 +26,9 @@ class AutoScraper(object):
     get_result_exact() - Get exact results based on the previously learnt stack-list
     get_results() - Get exact and similar results based on the previously learnt stack-list. 
     save() - Serialize the stack-list and url as JSON and save it to disk.
-    load() - De-serialize the JSON representation of the stack-list and the url load it back 
+    load() - De-serialize the JSON representation of the stack-list and the url and loads it back.
     remove_rules() - Remove one or more learnt rule/s from the stack-list.
-    keep_rules() - Keep only the specified learnt rules from the stack-list except and remove others. 
+    keep_rules() - Keep only the specified learnt rules from the stack-list and remove others. 
     """
 
     request_headers = {
@@ -63,7 +63,7 @@ class AutoScraper(object):
     def load(self, file_path):
 
         """
-        De-serialize the JSON representation of the stack-list and the url load it back 
+        De-serialize the JSON representation of the stack-list and the url and loads it back.
 
         Parameters
         ----------
