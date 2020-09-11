@@ -137,7 +137,7 @@ class AutoScraper(object):
         children = [x for x in children if self._child_has_text(x, text, url)]
         return children
 
-    def build(self, url=None, wanted_list=None, html=None, request_args=None, update=True):
+    def build(self, url=None, wanted_list=None, html=None, request_args=None, update=False):
         """
         Automatically constructs a set of rules to scrape the specified target[s] from a web page.
             The rules are represented as stack_list.
@@ -159,7 +159,7 @@ class AutoScraper(object):
             A dictionary used to specify a set of additional request parameters used by requests
                 module. You can specify proxy URLs, custom headers etc.
 
-        update: bool, optional, defaults to True
+        update: bool, optional, defaults to False
             If True, new learned rules will be added to the previous ones.
             If False, all previously learned rules will be removed.
 
