@@ -85,7 +85,7 @@ class AutoScraper(object):
     def _get_children(self, soup, text):
         text = text.strip()
         children = reversed(soup.findChildren())
-        children = list(filter(lambda x: self._child_has_text(x, text), children))
+        children = [x for x in children if self._child_has_text(x, text)]
         return children
 
     def build(self, url=None, wanted_list=None, html=None, request_args=None):
@@ -169,7 +169,7 @@ class AutoScraper(object):
         wanted_attr = stack['wanted_attr']
         is_full_url = stack['is_full_url']
         result = [self._fetch_result_from_child(i, wanted_attr, is_full_url) for i in parents]
-        result = list(filter(lambda x: x, result))
+        result = [x for x in result if x]
         return result
 
     def _get_result_with_stack_index_based(self, stack, soup):
@@ -184,7 +184,7 @@ class AutoScraper(object):
             p = p[idx]
 
         result = [self._fetch_result_from_child(p, stack['wanted_attr'], stack['is_full_url'])]
-        result = list(filter(lambda x: x, result))
+        result = [x for x in result if x]
         return result
 
     def _get_result_by_func(self, func, url, html, soup, request_args, grouped):
@@ -223,10 +223,10 @@ class AutoScraper(object):
         return similar, exact
 
     def remove_rules(self, rules):
-        self.stack_list = list(filter(lambda x: x['stack_id'] not in rules, self.stack_list))
+        self.stack_list = [x for x in self.stack_list if x['stack_id'] not in rules]
 
     def keep_rules(self, rules):
-        self.stack_list = list(filter(lambda x: x['stack_id'] in rules, self.stack_list))
+        self.stack_list = [x for x in self.stack_list if x['stack_id'] in rules]
 
     def generate_python_code(self):
         # deprecated
