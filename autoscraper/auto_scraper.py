@@ -9,6 +9,28 @@ from autoscraper.utils import unique, get_random_str
 
 
 class AutoScraper(object):
+
+    """
+    AutoScraper : A Smart, Automatic, Fast and Lightweight Web Scraper for Python.
+    Autoscraper automatically learns a set of rules regarding how to extract the interested content from a web-page, programmer need not have to explicitly construct the rules for scraping the web-page.
+
+    Attributes
+    ----------
+    url = url of the webpage being scraped
+    stack_list = list of rules learnt by AutoScraper. 
+
+    Methods
+    ----------
+    build() - Learns a set of rules represented as a stack-list based on wanted_list, which can be re-used for scraping similar elements from other webpages in the future.
+    get_result_similar() - Get similar results based on the previously learnt stack-list 
+    get_result_exact() - Get exact results based on the previously learnt stack-list
+    get_results() - Get exact and similar results based on the previously learnt stack-list. 
+    save() - Serialize the stack-list and url as JSON and save it to disk.
+    load() - De-serialize the JSON representation of the stack-list and the url load it back 
+    remove_rules() - Remove one or more learnt rule/s from the stack-list.
+    keep_rules() - Keep only the specified learnt rules from the stack-list except and remove others. 
+    """
+
     request_headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 \
             (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36'
@@ -19,11 +41,40 @@ class AutoScraper(object):
         self.url = url
 
     def save(self, file_path):
+
+        """
+        Serialize the stack-list and url as JSON and save it to the disk.
+
+        Parameters
+        ----------
+        file_path : str, path of the JSON output.
+
+        Returns
+        -------
+        None
+
+        """
+
+
         data = dict(url=self.url, stack_list=self.stack_list)
         with open(file_path, 'w') as f:
             json.dump(data, f)
 
     def load(self, file_path):
+
+        """
+        De-serialize the JSON representation of the stack-list and the url load it back 
+
+        Parameters
+        ----------
+        file_path : Path of the JSON file to load stack-list and URL from.
+
+        Returns
+        ---------
+        None
+
+        """
+
         with open(file_path, 'r') as f:
             data = json.load(f)
 
@@ -89,6 +140,28 @@ class AutoScraper(object):
         return children
 
     def build(self, url=None, wanted_list=None, html=None, request_args=None):
+
+        """
+        Automatically constructs a set of rules to scrape the specified target/s from a web page. The rules are represented as a stacklist.
+
+        Parameters:
+        ----------
+        url : str, optional.
+            URL of the target webpage
+        wanted_list : list, optional
+            A list of targets to scrape. AutoScraper learns set of rules to scrape these targets.
+        
+        html : str, optional
+            An HTML string can also be passed instead of URL.
+        
+        request_args : dict, optional
+            A dictionary used to specify a set of additional request parameters used by requests module. You can specify proxy URLs, custom-headers etc.
+
+        Returns:
+        --------
+        None
+        """
+
         self.url = url
         soup = self._get_soup(url=url, html=html, request_args=request_args)
 
@@ -223,9 +296,30 @@ class AutoScraper(object):
         return similar, exact
 
     def remove_rules(self, rules):
+        """
+        Removes a list of learnt rules from the stack-list.
+
+        Parameters:
+        ----------
+        rules : list
+                A list of rules to be removed
+        
+        Returns:
+        --------
+        None
+        """
         self.stack_list = list(filter(lambda x: x['stack_id'] not in rules, self.stack_list))
 
     def keep_rules(self, rules):
+        """
+        Removes all other rules except the specified rules.
+
+        Parameters:
+        ----------
+        rules : list
+                A list of rules to keep.
+        """
+
         self.stack_list = list(filter(lambda x: x['stack_id'] in rules, self.stack_list))
 
     def generate_python_code(self):
