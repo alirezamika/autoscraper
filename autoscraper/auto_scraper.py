@@ -311,6 +311,7 @@ class AutoScraper(object):
         --------
         None
         """
+
         self.stack_list = [x for x in self.stack_list if x['stack_id'] not in rules]
 
     def keep_rules(self, rules):
@@ -322,6 +323,7 @@ class AutoScraper(object):
         rules : list
             A list of rules to keep in stack_list.
         """
+
         self.stack_list = [x for x in self.stack_list if x['stack_id'] in rules]
 
     def generate_python_code(self):
