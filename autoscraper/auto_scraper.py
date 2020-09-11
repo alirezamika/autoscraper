@@ -19,6 +19,8 @@ class AutoScraper(object):
     ----------
     stack_list: list
         List of rules learned by AutoScraper
+    metadata : dict
+        Optional information assiociated with the learned rules.
 
     Methods
     -------
@@ -31,6 +33,8 @@ class AutoScraper(object):
     load() - De-serializes the JSON representation of the stack_list and loads it back.
     remove_rules() - Removes one or more learned rule[s] from the stack_list.
     keep_rules() - Keeps only the specified learned rules in the stack_list and removes the others.
+    set_metadata() - Set an optional metadata which will be saved along with the rules.
+    get_metadata() - Get metadata assiociated with the loaded rules.
     """
 
     request_headers = {
@@ -40,8 +44,9 @@ class AutoScraper(object):
 
     def __init__(self, stack_list=None):
         self.stack_list = stack_list or []
+        self._metadata = {}
 
-    def save(self, file_path):
+    def save(self, file_path, metadata = {}):
         """
         Serializes the stack_list as JSON and saves it to the disk.
 
@@ -54,8 +59,8 @@ class AutoScraper(object):
         -------
         None
         """
-
-        data = dict(stack_list=self.stack_list)
+        metadata_to_save = metadata if (metadata and metadata != {}) else self._metadata
+        data = dict(stack_list=self.stack_list, metadata = metadata_to_save)
         with open(file_path, 'w') as f:
             json.dump(data, f)
 
@@ -82,6 +87,7 @@ class AutoScraper(object):
             return
 
         self.stack_list = data['stack_list']
+        self._metadata = data['metadata']
 
     @classmethod
     def _get_soup(cls, url=None, html=None, request_args=None):
@@ -414,3 +420,30 @@ class AutoScraper(object):
     def generate_python_code(self):
         # deprecated
         print('This function is deprecated. Please use save() and load() instead.')
+    
+
+    def set_metadata(self, metadata = {}) :
+        """
+        Set an optional metadata which will be saved along with the rules
+        Parameters:
+        ----------
+        metadata: dict, optional
+                    A dict that contains additional information to be assiociated with the learnt rules.
+        Returns:
+        ---------
+        None
+        """
+        self._metadata = metadata
+    
+    def get_metadata(self) :
+        """
+        Get metadata assiociated with the loaded rules.
+        Parameters:
+        -----------
+        None
+
+        Returns
+        --------
+        A dict representing metadata assiociated with the learnt rules.
+        """
+        return self._metadata
