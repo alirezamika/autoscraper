@@ -443,8 +443,16 @@ class AutoScraper(object):
         Set an optional metadata which will be saved along with the rules
         Parameters:
         ----------
-        metadata: dict, optional
-                    A dict that contains additional information to be assiociated with the learnt rules.
+        model_name: str, optional
+                    Name of the model
+        author : str, optional
+                    Name of the author
+        author_email : str, optional
+                    Author email address
+        description : str, optional
+                    Description of the model
+        keywords : list, optional
+                    A list of keywords assiociated with the model
         Returns:
         ---------
         None
@@ -465,5 +473,12 @@ class AutoScraper(object):
         Returns
         --------
         A dict representing metadata assiociated with the learnt rules.
+        Fields:
+            author : Name of the author
+            author_email : Email address of the author
+            model_name : Name of the model 
+            description : A short description of the model
+            keywords : A list of keywords
+            target_urls : A list of target urls used for learning the rules.
         """
         return self._metadata
