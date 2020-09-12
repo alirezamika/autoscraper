@@ -44,9 +44,16 @@ class AutoScraper(object):
 
     def __init__(self, stack_list=None):
         self.stack_list = stack_list or []
-        self._metadata = {}
+        self._metadata = {
+            "model_name" : "",
+            "author" : "",
+            "author_email" : "",
+            "description" : "",
+            "keywords" : [],
+            "target_urls" : []
+        }
 
-    def save(self, file_path, metadata = {}):
+    def save(self, file_path):
         """
         Serializes the stack_list as JSON and saves it to the disk.
 
@@ -59,8 +66,7 @@ class AutoScraper(object):
         -------
         None
         """
-        metadata_to_save = metadata if (metadata and metadata != {}) else self._metadata
-        data = dict(stack_list=self.stack_list, metadata = metadata_to_save)
+        data = dict(stack_list=self.stack_list, metadata = self._metadata)
         with open(file_path, 'w') as f:
             json.dump(data, f)
 
@@ -194,6 +200,16 @@ class AutoScraper(object):
         if all(w in result_list for w in wanted_list):
             self.stack_list = unique_stack_list(self.stack_list)
             return result_list
+        
+
+        #add url to metadata 
+        if not update and url :
+            self._metadata['target_urls'] = [url]
+        elif update and url :
+            if not 'target_urls' in self._metadata :
+                self._metadata['target_urls'] = [url]
+            else :
+                self._metadata['target_urls'].append(url)
 
         return None
 
@@ -422,7 +438,7 @@ class AutoScraper(object):
         print('This function is deprecated. Please use save() and load() instead.')
     
 
-    def set_metadata(self, metadata = {}) :
+    def set_metadata(self, model_name = "", author = "", author_email = "", description = "", keywords = []) :
         """
         Set an optional metadata which will be saved along with the rules
         Parameters:
@@ -433,7 +449,11 @@ class AutoScraper(object):
         ---------
         None
         """
-        self._metadata = metadata
+        self._metadata['model_name'] = model_name
+        self._metadata['author'] = author
+        self._metadata['author_email'] = author_email
+        self._metadata['description'] = description
+        self._metadata['keywords'] = keywords
     
     def get_metadata(self) :
         """
