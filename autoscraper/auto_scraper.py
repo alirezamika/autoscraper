@@ -1,6 +1,9 @@
 import hashlib
 import json
+import unicodedata
+
 from collections import defaultdict
+from html import unescape
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -97,7 +100,8 @@ class AutoScraper(object):
         user_headers = request_args.pop('headers', {})
         headers.update(user_headers)
         html = requests.get(url, headers=headers, **request_args).text
-
+        html = unicodedata.normalize("NFKD", unescape(html))
+        
         return BeautifulSoup(html, 'lxml')
 
     @staticmethod
