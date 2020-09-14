@@ -102,19 +102,30 @@ class AutoScraper(object):
         headers.update(user_headers)
         html = requests.get(url, headers=headers, **request_args).text
         html = unicodedata.normalize("NFKD", unescape(html))
-        
+
         return BeautifulSoup(html, 'lxml')
 
     @staticmethod
     def _get_valid_attrs(item):
-        return {
-            k: v if v != [] else '' for k, v in item.attrs.items() if k in {'class', 'style'}
+        key_attrs = {'class', 'style'}
+        attrs = {
+            k: v if v != [] else '' for k, v in item.attrs.items() if k in key_attrs
         }
+
+        for attr in key_attrs:
+            if attr not in attrs:
+                attrs[attr] = ''
+        return attrs
 
     @staticmethod
     def _child_has_text(child, text, url):
         child_text = child.getText().strip()
+
         if text == child_text:
+            parent_text = child.parent.getText().strip()
+            if child_text == parent_text:
+                return False
+
             child.wanted_attr = None
             return True
 
@@ -249,10 +260,19 @@ class AutoScraper(object):
 
     def _get_result_with_stack(self, stack, soup, url):
         parents = [soup]
-        for _, item in enumerate(stack['content']):
+        stack_content = stack['content']
+        for index, item in enumerate(stack_content):
             children = []
             for parent in parents:
-                children += parent.findAll(item[0], item[1], recursive=False)
+                found = parent.findAll(item[0], item[1], recursive=False)
+                if not found:
+                    continue
+
+                if index == len(stack_content) - 1:
+                    idx = min(len(found) - 1, stack_content[index - 1][2])
+                    found = [found[idx]]
+
+                children += found
 
             parents = children
 
