@@ -180,6 +180,8 @@ class AutoScraper(object):
         if update is False:
             self.stack_list = []
 
+        wanted_list = [unicodedata.normalize("NFKD", w) for w in wanted_list]
+
         for wanted in wanted_list:
             children = self._get_children(soup, wanted, url)
 
