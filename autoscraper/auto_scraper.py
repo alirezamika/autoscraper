@@ -165,7 +165,12 @@ class AutoScraper(object):
 
         wanted_list: list, optional
             A list of needed contents to be scraped.
-                AutoScraper learns a set of rules to scrape these targets.
+                AutoScraper learns a set of rules to scrape these targets. If specified,
+                wanted_dict will be ignored.
+        
+        wanted_dict: dict, optional
+            A dict of needed contents to be scraped. Keys are aliases and values are list of target texts.
+                AutoScraper learns a set of rules to scrape these targets and sets its aliases.
 
         html: str, optional
             An HTML string can also be passed instead of URL.
@@ -365,8 +370,7 @@ class AutoScraper(object):
 
         grouped: bool, optional, defaults to False
             If set to True, the result will be a dictionary with the rule_ids as keys
-                and a list of scraped data per rule as values. If specified,
-                group_by_alias will be ignored.
+                and a list of scraped data per rule as values.
 
         group_by_alias: bool, optional, defaults to False
             If set to True, the result will be a dictionary with the rule alias as keys
@@ -401,8 +405,7 @@ class AutoScraper(object):
 
         grouped: bool, optional, defaults to False
             If set to True, the result will be a dictionary with the rule_ids as keys
-                and a list of scraped data per rule as values. If specified,
-                group_by_alias will be ignored.
+                and a list of scraped data per rule as values.
 
         group_by_alias: bool, optional, defaults to False
             If set to True, the result will be a dictionary with the rule alias as keys
@@ -436,8 +439,7 @@ class AutoScraper(object):
 
         grouped: bool, optional, defaults to False
             If set to True, the result will be dictionaries with the rule_ids as keys
-                and a list of scraped data per rule as values. If specified,
-                group_by_alias will be ignored.
+                and a list of scraped data per rule as values.
 
         group_by_alias: bool, optional, defaults to False
             If set to True, the result will be a dictionary with the rule alias as keys
