@@ -9,7 +9,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from autoscraper.utils import get_random_str, unique_hashable, unique_stack_list
+from autoscraper.utils import get_random_str, unique_hashable, unique_stack_list, ResultItem
 
 
 class AutoScraper(object):
@@ -153,7 +153,7 @@ class AutoScraper(object):
         children = [x for x in children if self._child_has_text(x, text, url)]
         return children
 
-    def build(self, url=None, wanted_list=None, html=None, request_args=None, update=False):
+    def build(self, url=None, wanted_list=None, wanted_dict=None, html=None, request_args=None, update=False):
         """
         Automatically constructs a set of rules to scrape the specified target[s] from a web page.
             The rules are represented as stack_list.
@@ -191,16 +191,25 @@ class AutoScraper(object):
         if update is False:
             self.stack_list = []
 
-        wanted_list = [unicodedata.normalize("NFKD", w) for w in wanted_list]
+        if wanted_list:
+            wanted_dict = {'': wanted_list}
 
-        for wanted in wanted_list:
-            children = self._get_children(soup, wanted, url)
+        wanted_list = []
 
-            for child in children:
-                result, stack = self._get_result_for_child(child, soup, url)
-                result_list += result
-                self.stack_list.append(stack)
+        for alias, wanted_items in wanted_dict.items():
+            wanted_items = [unicodedata.normalize("NFKD", w) for w in wanted_items]
+            wanted_list += wanted_items
 
+            for wanted in wanted_items:
+                children = self._get_children(soup, wanted, url)
+
+                for child in children:
+                    result, stack = self._get_result_for_child(child, soup, url)
+                    stack['alias'] = alias
+                    result_list += result
+                    self.stack_list.append(stack)
+
+        result_list = [item.text for item in result_list]
         result_list = unique_hashable(result_list)
 
         if all(w in result_list for w in wanted_list):
@@ -278,8 +287,9 @@ class AutoScraper(object):
 
         wanted_attr = stack['wanted_attr']
         is_full_url = stack['is_full_url']
-        result = [self._fetch_result_from_child(i, wanted_attr, is_full_url, url) for i in parents]
-        result = [x for x in result if x]
+        result = [ResultItem(self._fetch_result_from_child(i, wanted_attr, is_full_url, url),
+                              getattr(i, 'child_index', 0)) for i in parents]
+        result = [x for x in result if x.text]
         return result
 
     def _get_result_with_stack_index_based(self, stack, soup, url):
@@ -293,13 +303,18 @@ class AutoScraper(object):
             idx = min(len(p) - 1, item[2])
             p = p[idx]
 
-        result = [self._fetch_result_from_child(p, stack['wanted_attr'], stack['is_full_url'], url)]
-        result = [x for x in result if x]
+        result = [ResultItem(self._fetch_result_from_child(
+            p, stack['wanted_attr'], stack['is_full_url'], url), getattr(p, 'child_index', 0))]
+        result = [x for x in result if x.text]
         return result
 
-    def _get_result_by_func(self, func, url, html, soup, request_args, grouped):
+    def _get_result_by_func(self, func, url, html, soup, request_args, grouped, group_by_alias):
         if not soup:
             soup = self._get_soup(url=url, html=html, request_args=request_args)
+
+        if group_by_alias:
+            for index, child in enumerate(soup.findChildren()):
+                setattr(child, 'child_index', index)
 
         result_list = []
         grouped_result = defaultdict(list)
@@ -309,16 +324,29 @@ class AutoScraper(object):
 
             result = func(stack, soup, url)
 
-            if not grouped:
+            if not grouped and not group_by_alias:
                 result_list += result
                 continue
 
-            stack_id = stack['stack_id']
-            grouped_result[stack_id] += result
+            group_id = stack.get('alias', '') if group_by_alias else stack['stack_id']
+            grouped_result[group_id] += result
 
-        return dict(grouped_result) if grouped else unique_hashable(result_list)
+        return self._clean_result(result_list, grouped_result, grouped, group_by_alias)
 
-    def get_result_similar(self, url=None, html=None, soup=None, request_args=None, grouped=False):
+    @staticmethod
+    def _clean_result(result_list, grouped_result, grouped, grouped_by_alias):
+        if not grouped and not grouped_by_alias:
+            return unique_hashable([x.text for x in result_list])
+
+        for k, val in grouped_result.items():
+            if grouped_by_alias:
+                val = sorted(val, key=lambda x: x.index)
+            grouped_result[k] = [x.text for x in val]
+
+        return dict(grouped_result)
+
+    def get_result_similar(self, url=None, html=None, soup=None, request_args=None,
+                           grouped=False, group_by_alias=False):
         """
         Gets similar results based on the previously learned rules.
 
@@ -337,18 +365,24 @@ class AutoScraper(object):
 
         grouped: bool, optional, defaults to False
             If set to True, the result will be a dictionary with the rule_ids as keys
-                and a list of scraped data per rule as values.
+                and a list of scraped data per rule as values. If specified,
+                group_by_alias will be ignored.
+
+        group_by_alias: bool, optional, defaults to False
+            If set to True, the result will be a dictionary with the rule alias as keys
+                and a list of scraped data per alias as values.
 
         Returns:
         --------
         List of similar results scraped from the web page.
-        Dictionary if grouped=True.
+        Dictionary if grouped=True or group_by_alias=True.
         """
 
         func = self._get_result_with_stack
-        return self._get_result_by_func(func, url, html, soup, request_args, grouped)
+        return self._get_result_by_func(func, url, html, soup, request_args, grouped, group_by_alias)
 
-    def get_result_exact(self, url=None, html=None, soup=None, request_args=None, grouped=False):
+    def get_result_exact(self, url=None, html=None, soup=None, request_args=None,
+                         grouped=False, group_by_alias=False):
         """
         Gets exact results based on the previously learned rules.
 
@@ -367,18 +401,23 @@ class AutoScraper(object):
 
         grouped: bool, optional, defaults to False
             If set to True, the result will be a dictionary with the rule_ids as keys
-                and a list of scraped data per rule as values.
+                and a list of scraped data per rule as values. If specified,
+                group_by_alias will be ignored.
+
+        group_by_alias: bool, optional, defaults to False
+            If set to True, the result will be a dictionary with the rule alias as keys
+                and a list of scraped data per alias as values.
 
         Returns:
         --------
         List of exact results scraped from the web page.
-        Dictionary if grouped=True.
+        Dictionary if grouped=True or group_by_alias=True.
         """
 
         func = self._get_result_with_stack_index_based
-        return self._get_result_by_func(func, url, html, soup, request_args, grouped)
+        return self._get_result_by_func(func, url, html, soup, request_args, grouped, group_by_alias)
 
-    def get_result(self, url=None, html=None, request_args=None, grouped=False):
+    def get_result(self, url=None, html=None, request_args=None, grouped=False, group_by_alias=False):
         """
         Gets similar and exact results based on the previously learned rules.
 
@@ -397,7 +436,12 @@ class AutoScraper(object):
 
         grouped: bool, optional, defaults to False
             If set to True, the result will be dictionaries with the rule_ids as keys
-                and a list of scraped data per rule as values.
+                and a list of scraped data per rule as values. If specified,
+                group_by_alias will be ignored.
+
+        group_by_alias: bool, optional, defaults to False
+            If set to True, the result will be a dictionary with the rule alias as keys
+                and a list of scraped data per alias as values.
 
         Returns:
         --------
@@ -406,8 +450,8 @@ class AutoScraper(object):
         """
 
         soup = self._get_soup(url=url, html=html, request_args=request_args)
-        similar = self.get_result_similar(url=url, soup=soup, grouped=grouped)
-        exact = self.get_result_exact(url=url, soup=soup, grouped=grouped)
+        similar = self.get_result_similar(url=url, soup=soup, grouped=grouped, group_by_alias=group_by_alias)
+        exact = self.get_result_exact(url=url, soup=soup, grouped=grouped, group_by_alias=group_by_alias)
         return similar, exact
 
     def remove_rules(self, rules):
@@ -441,6 +485,24 @@ class AutoScraper(object):
         """
 
         self.stack_list = [x for x in self.stack_list if x['stack_id'] in rules]
+
+    def set_rule_aliases(self, rule_aliases):
+        """
+        Sets the specified alias for each rule
+
+        Parameters:
+        ----------
+        rule_aliases : dict
+            A dictionary with keys of rule_id and values of alias
+
+        Returns:
+        --------
+        None
+        """
+
+        id_to_stack = {stack['stack_id']: stack for stack in self.stack_list}
+        for rule_id, alias in rule_aliases.items():
+            id_to_stack[rule_id]['alias'] = alias
 
     def generate_python_code(self):
         # deprecated
