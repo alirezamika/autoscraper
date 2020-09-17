@@ -272,9 +272,10 @@ class AutoScraper(object):
 
         return child.attrs[wanted_attr]
 
-    def _get_result_with_stack(self, stack, soup, url):
+    def _get_result_with_stack(self, stack, soup, url, **kwargs):
         parents = [soup]
         stack_content = stack['content']
+        contain_sibling_leaves = kwargs.get('contain_sibling_leaves', False)
         for index, item in enumerate(stack_content):
             children = []
             for parent in parents:
@@ -282,7 +283,7 @@ class AutoScraper(object):
                 if not found:
                     continue
 
-                if index == len(stack_content) - 1:
+                if not contain_sibling_leaves and index == len(stack_content) - 1:
                     idx = min(len(found) - 1, stack_content[index - 1][2])
                     found = [found[idx]]
 
@@ -297,7 +298,7 @@ class AutoScraper(object):
         result = [x for x in result if x.text]
         return result
 
-    def _get_result_with_stack_index_based(self, stack, soup, url):
+    def _get_result_with_stack_index_based(self, stack, soup, url, **kwargs):
         p = soup.findChildren(recursive=False)[0]
         stack_content = stack['content']
         for index, item in enumerate(stack_content[:-1]):
@@ -313,11 +314,14 @@ class AutoScraper(object):
         result = [x for x in result if x.text]
         return result
 
-    def _get_result_by_func(self, func, url, html, soup, request_args, grouped, group_by_alias):
+    def _get_result_by_func(self, func, url, html, soup, request_args, grouped, 
+                            group_by_alias, unique, **kwargs):
         if not soup:
             soup = self._get_soup(url=url, html=html, request_args=request_args)
 
-        if group_by_alias:
+        keep_order = kwargs.get('keep_order', False)
+
+        if group_by_alias or (keep_order and not grouped):
             for index, child in enumerate(soup.findChildren()):
                 setattr(child, 'child_index', index)
 
@@ -327,7 +331,7 @@ class AutoScraper(object):
             if not url:
                 url = stack.get('url', '')
 
-            result = func(stack, soup, url)
+            result = func(stack, soup, url, **kwargs)
 
             if not grouped and not group_by_alias:
                 result_list += result
@@ -336,12 +340,18 @@ class AutoScraper(object):
             group_id = stack.get('alias', '') if group_by_alias else stack['stack_id']
             grouped_result[group_id] += result
 
-        return self._clean_result(result_list, grouped_result, grouped, group_by_alias)
+        return self._clean_result(result_list, grouped_result, grouped, group_by_alias, 
+                                  unique, keep_order)
 
     @staticmethod
-    def _clean_result(result_list, grouped_result, grouped, grouped_by_alias):
+    def _clean_result(result_list, grouped_result, grouped, grouped_by_alias, unique, keep_order):
         if not grouped and not grouped_by_alias:
-            return unique_hashable([x.text for x in result_list])
+            if keep_order:
+                result_list = sorted(result_list, key=lambda x: x.index)
+            result = [x.text for x in result_list]
+            if unique:
+                result = unique_hashable(result)
+            return result
 
         for k, val in grouped_result.items():
             if grouped_by_alias:
@@ -351,7 +361,8 @@ class AutoScraper(object):
         return dict(grouped_result)
 
     def get_result_similar(self, url=None, html=None, soup=None, request_args=None,
-                           grouped=False, group_by_alias=False):
+                           grouped=False, group_by_alias=False, unique=True, keep_order=False,
+                           contain_sibling_leaves=False):
         """
         Gets similar results based on the previously learned rules.
 
@@ -376,6 +387,15 @@ class AutoScraper(object):
             If set to True, the result will be a dictionary with the rule alias as keys
                 and a list of scraped data per alias as values.
 
+        unique: bool, optional, defaults to True
+            If set to True, will remove duplicates from returned result list. 
+
+        keep_order: bool, optional, defaults to False
+            If set to True, the results will be ordered as they are present on the web page.
+
+        contain_sibling_leaves: bool, optional, defaults to False
+            If set to True, the results will also contain the sibling leaves of the wanted elements.
+
         Returns:
         --------
         List of similar results scraped from the web page.
@@ -383,10 +403,12 @@ class AutoScraper(object):
         """
 
         func = self._get_result_with_stack
-        return self._get_result_by_func(func, url, html, soup, request_args, grouped, group_by_alias)
+        return self._get_result_by_func(func, url, html, soup, request_args, grouped,
+                                         group_by_alias, unique, keep_order=keep_order,
+                                         contain_sibling_leaves=contain_sibling_leaves)
 
     def get_result_exact(self, url=None, html=None, soup=None, request_args=None,
-                         grouped=False, group_by_alias=False):
+                         grouped=False, group_by_alias=False, unique=True):
         """
         Gets exact results based on the previously learned rules.
 
@@ -411,6 +433,9 @@ class AutoScraper(object):
             If set to True, the result will be a dictionary with the rule alias as keys
                 and a list of scraped data per alias as values.
 
+        unique: bool, optional, defaults to True
+            If set to True, will remove duplicates from returned result list. 
+
         Returns:
         --------
         List of exact results scraped from the web page.
@@ -418,7 +443,8 @@ class AutoScraper(object):
         """
 
         func = self._get_result_with_stack_index_based
-        return self._get_result_by_func(func, url, html, soup, request_args, grouped, group_by_alias)
+        return self._get_result_by_func(func, url, html, soup, request_args, grouped, 
+                                        group_by_alias, unique)
 
     def get_result(self, url=None, html=None, request_args=None, grouped=False, group_by_alias=False):
         """
