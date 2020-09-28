@@ -7,16 +7,21 @@ It gets a url or the html content of a web page and a list of sample data which 
 
 ## Installation
 
-It's compatible with python3.
+It's compatible with python 3.
 
-Install from source:
-```bash
-$ python setup.py install
-```
-    
-Install latest version from git repository using pip:
+- Install latest version from git repository using pip:
 ```bash
 $ pip install git+https://github.com/alirezamika/autoscraper.git
+```
+
+- Install from PyPi:
+```bash
+$ pip install autoscraper
+```
+
+- Install from source:
+```bash
+$ python setup.py install
 ```
 
 ## How to use
