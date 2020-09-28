@@ -14,7 +14,7 @@ It's compatible with python 3.
 $ pip install git+https://github.com/alirezamika/autoscraper.git
 ```
 
-- Install from PyPi:
+- Install from PyPI:
 ```bash
 $ pip install autoscraper
 ```
