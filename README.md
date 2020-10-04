@@ -104,12 +104,12 @@ scraper.get_result_exact('https://finance.yahoo.com/quote/MSFT/')
 
 ```python
 from autoscraper import AutoScraper
-scraper = AutoScraper()
 
 url = 'https://github.com/alirezamika/autoscraper'
 
-wanted_list = ['A Smart, Automatic, Fast and Lightweight Web Scraper for Python', '662', 'https://github.com/alirezamika/autoscraper/issues']
+wanted_list = ['A Smart, Automatic, Fast and Lightweight Web Scraper for Python', '2.2k', 'https://github.com/alirezamika/autoscraper/issues']
 
+scraper = AutoScraper()
 scraper.build(url, wanted_list)
 ```
 
