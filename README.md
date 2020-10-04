@@ -80,6 +80,7 @@ scraper = AutoScraper()
 result = scraper.build(url, wanted_list)
 print(result)
 ```
+Note that you should update the `wanted_list` if you want to copy this code, as the content of the page dynamically changes.
 
 You can also pass any custom `requests` module parameter. for example you may want to use proxies or custom headers:
 
@@ -100,7 +101,7 @@ scraper.get_result_exact('https://finance.yahoo.com/quote/MSFT/')
 
 **You may want to get other info as well.** For example if you want to get market cap too, you can just append it to the wanted list. By using the `get_result_exact` method, it will retrieve the data as the same exact order in the wanted list.
 
-**Another example:** Say we want to scrape the about text, number of stars and the link to pull requests of Github repo pages:
+**Another example:** Say we want to scrape the about text, number of stars and the link to issues of Github repo pages:
 
 ```python
 from autoscraper import AutoScraper
