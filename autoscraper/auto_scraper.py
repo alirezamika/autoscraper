@@ -9,7 +9,8 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from autoscraper.utils import get_random_str, unique_hashable, unique_stack_list, ResultItem
+from autoscraper.utils import get_random_str, unique_hashable, unique_stack_list, \
+    ResultItem, FuzzyText
 
 
 class AutoScraper(object):
@@ -256,7 +257,7 @@ class AutoScraper(object):
 
     def _get_result_for_child(self, child, soup, url):
         stack = self._build_stack(child, url)
-        result = self._get_result_with_stack(stack, soup, url)
+        result = self._get_result_with_stack(stack, soup, url, 1.0)
         return result, stack
 
     @staticmethod
@@ -272,14 +273,30 @@ class AutoScraper(object):
 
         return child.attrs[wanted_attr]
 
-    def _get_result_with_stack(self, stack, soup, url, **kwargs):
+    @staticmethod
+    def _get_fuzzy_attrs(attrs, attr_fuzz_ratio):
+        attrs = dict(attrs)
+        for key, val in attrs.items():
+            if isinstance(val, str) and val:
+                val = FuzzyText(val, attr_fuzz_ratio)
+            elif isinstance(val, (list, tuple)):
+                val = [FuzzyText(x, attr_fuzz_ratio) if x else x for x in val]
+            attrs[key] = val
+        return attrs
+
+    def _get_result_with_stack(self, stack, soup, url, attr_fuzz_ratio, **kwargs):
         parents = [soup]
         stack_content = stack['content']
         contain_sibling_leaves = kwargs.get('contain_sibling_leaves', False)
         for index, item in enumerate(stack_content):
             children = []
             for parent in parents:
-                found = parent.findAll(item[0], item[1], recursive=False)
+
+                attrs = item[1]
+                if attr_fuzz_ratio < 1.0:
+                    attrs = self._get_fuzzy_attrs(attrs, attr_fuzz_ratio)
+
+                found = parent.findAll(item[0], attrs, recursive=False)
                 if not found:
                     continue
 
@@ -298,12 +315,15 @@ class AutoScraper(object):
         result = [x for x in result if x.text]
         return result
 
-    def _get_result_with_stack_index_based(self, stack, soup, url, **kwargs):
+    def _get_result_with_stack_index_based(self, stack, soup, url, attr_fuzz_ratio, **kwargs):
         p = soup.findChildren(recursive=False)[0]
         stack_content = stack['content']
         for index, item in enumerate(stack_content[:-1]):
             content = stack_content[index + 1]
-            p = p.findAll(content[0], content[1], recursive=False)
+            attrs = content[1]
+            if attr_fuzz_ratio < 1.0:
+                attrs = self._get_fuzzy_attrs(attrs, attr_fuzz_ratio)
+            p = p.findAll(content[0], attrs, recursive=False)
             if not p:
                 return []
             idx = min(len(p) - 1, item[2])
@@ -315,7 +335,7 @@ class AutoScraper(object):
         return result
 
     def _get_result_by_func(self, func, url, html, soup, request_args, grouped,
-                            group_by_alias, unique, **kwargs):
+                            group_by_alias, unique, attr_fuzz_ratio, **kwargs):
         if not soup:
             soup = self._get_soup(url=url, html=html, request_args=request_args)
 
@@ -331,7 +351,7 @@ class AutoScraper(object):
             if not url:
                 url = stack.get('url', '')
 
-            result = func(stack, soup, url, **kwargs)
+            result = func(stack, soup, url, attr_fuzz_ratio, **kwargs)
 
             if not grouped and not group_by_alias:
                 result_list += result
@@ -366,8 +386,8 @@ class AutoScraper(object):
         return dict(grouped_result)
 
     def get_result_similar(self, url=None, html=None, soup=None, request_args=None,
-                           grouped=False, group_by_alias=False, unique=None, keep_order=False,
-                           contain_sibling_leaves=False):
+                           grouped=False, group_by_alias=False, unique=None, attr_fuzz_ratio=1.0,
+                           keep_order=False, contain_sibling_leaves=False):
         """
         Gets similar results based on the previously learned rules.
 
@@ -396,6 +416,9 @@ class AutoScraper(object):
                 False for grouped results.
             If set to True, will remove duplicates from returned result list.
 
+        attr_fuzz_ratio: float in range [0, 1], optional, defaults to 1.0
+            The fuzziness ratio threshold for matching html tag attributes.
+
         keep_order: bool, optional, defaults to False
             If set to True, the results will be ordered as they are present on the web page.
 
@@ -410,11 +433,12 @@ class AutoScraper(object):
 
         func = self._get_result_with_stack
         return self._get_result_by_func(func, url, html, soup, request_args, grouped,
-                                         group_by_alias, unique, keep_order=keep_order,
+                                         group_by_alias, unique, attr_fuzz_ratio,
+                                         keep_order=keep_order,
                                          contain_sibling_leaves=contain_sibling_leaves)
 
     def get_result_exact(self, url=None, html=None, soup=None, request_args=None,
-                         grouped=False, group_by_alias=False, unique=None):
+                         grouped=False, group_by_alias=False, unique=None, attr_fuzz_ratio=1.0):
         """
         Gets exact results based on the previously learned rules.
 
@@ -443,6 +467,9 @@ class AutoScraper(object):
                 False for grouped results.
             If set to True, will remove duplicates from returned result list.
 
+        attr_fuzz_ratio: float in range [0, 1], optional, defaults to 1.0
+            The fuzziness ratio threshold for matching html tag attributes.
+
         Returns:
         --------
         List of exact results scraped from the web page.
@@ -451,9 +478,10 @@ class AutoScraper(object):
 
         func = self._get_result_with_stack_index_based
         return self._get_result_by_func(func, url, html, soup, request_args, grouped,
-                                        group_by_alias, unique)
+                                        group_by_alias, unique, attr_fuzz_ratio)
 
-    def get_result(self, url=None, html=None, request_args=None, grouped=False, group_by_alias=False):
+    def get_result(self, url=None, html=None, request_args=None, grouped=False,
+                   group_by_alias=False, unique=None, attr_fuzz_ratio=1.0):
         """
         Gets similar and exact results based on the previously learned rules.
 
@@ -478,6 +506,13 @@ class AutoScraper(object):
             If set to True, the result will be a dictionary with the rule alias as keys
                 and a list of scraped data per alias as values.
 
+        unique: bool, optional, defaults to True for non grouped results and
+                False for grouped results.
+            If set to True, will remove duplicates from returned result list.
+
+        attr_fuzz_ratio: float in range [0, 1], optional, defaults to 1.0
+            The fuzziness ratio threshold for matching html tag attributes.
+
         Returns:
         --------
         Pair of (similar, exact) results.
@@ -485,8 +520,10 @@ class AutoScraper(object):
         """
 
         soup = self._get_soup(url=url, html=html, request_args=request_args)
-        similar = self.get_result_similar(url=url, soup=soup, grouped=grouped, group_by_alias=group_by_alias)
-        exact = self.get_result_exact(url=url, soup=soup, grouped=grouped, group_by_alias=group_by_alias)
+        args = dict(url=url, soup=soup, grouped=grouped, group_by_alias=group_by_alias,
+                                        unique=unique, attr_fuzz_ratio=attr_fuzz_ratio)
+        similar = self.get_result_similar(**args)
+        exact = self.get_result_exact(**args)
         return similar, exact
 
     def remove_rules(self, rules):
