@@ -31,6 +31,10 @@ def get_random_str(n):
     return ''.join(random.choice(chars) for i in range(n))
 
 
+def get_non_rec_text(element):
+    return ''.join(element.find_all(text=True, recursive=False)).strip()
+
+
 class ResultItem():
     def __init__(self, text, index):
         self.text = text

@@ -10,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from autoscraper.utils import get_random_str, unique_hashable, unique_stack_list, \
-    ResultItem, FuzzyText
+    ResultItem, FuzzyText, get_non_rec_text
 
 
 class AutoScraper(object):
@@ -127,6 +127,11 @@ class AutoScraper(object):
             if child_text == parent_text:
                 return False
 
+            child.wanted_attr = None
+            return True
+
+        if text == get_non_rec_text(child):
+            child.is_non_rec_text = True
             child.wanted_attr = None
             return True
 
@@ -249,7 +254,9 @@ class AutoScraper(object):
 
         wanted_attr = getattr(child, 'wanted_attr', None)
         is_full_url = getattr(child, 'is_full_url', False)
-        stack = dict(content=content, wanted_attr=wanted_attr, is_full_url=is_full_url)
+        is_non_rec_text = getattr(child, 'is_non_rec_text', False)
+        stack = dict(content=content, wanted_attr=wanted_attr, is_full_url=is_full_url,
+                     is_non_rec_text=is_non_rec_text)
         stack['url'] = url if is_full_url else ''
         stack['hash'] = hashlib.sha256(str(stack).encode('utf-8')).hexdigest()
         stack['stack_id'] = 'rule_' + get_random_str(4)
@@ -261,8 +268,10 @@ class AutoScraper(object):
         return result, stack
 
     @staticmethod
-    def _fetch_result_from_child(child, wanted_attr, is_full_url, url):
+    def _fetch_result_from_child(child, wanted_attr, is_full_url, url, is_non_rec_text):
         if wanted_attr is None:
+            if is_non_rec_text:
+                return get_non_rec_text(child)
             return child.getText().strip()
 
         if wanted_attr not in child.attrs:
@@ -310,7 +319,9 @@ class AutoScraper(object):
 
         wanted_attr = stack['wanted_attr']
         is_full_url = stack['is_full_url']
-        result = [ResultItem(self._fetch_result_from_child(i, wanted_attr, is_full_url, url),
+        is_non_rec_text = stack['is_non_rec_text']
+        result = [ResultItem(self._fetch_result_from_child(i, wanted_attr,
+                              is_full_url, url, is_non_rec_text),
                               getattr(i, 'child_index', 0)) for i in parents]
         result = [x for x in result if x.text]
         return result
@@ -330,7 +341,8 @@ class AutoScraper(object):
             p = p[idx]
 
         result = [ResultItem(self._fetch_result_from_child(
-            p, stack['wanted_attr'], stack['is_full_url'], url), getattr(p, 'child_index', 0))]
+            p, stack['wanted_attr'], stack['is_full_url'], url, stack['is_non_rec_text']),
+            getattr(p, 'child_index', 0))]
         result = [x for x in result if x.text]
         return result
 
