@@ -34,6 +34,6 @@ setup(
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
 
     python_requires='>=3.6',
-    install_requires=['requests', 'bs4', 'lxml', 'fuzzywuzzy'],
+    install_requires=['requests', 'bs4', 'lxml'],
 
 )
