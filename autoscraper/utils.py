@@ -32,6 +32,12 @@ def get_non_rec_text(element):
     return ''.join(element.find_all(text=True, recursive=False)).strip()
 
 
+def text_match(t1, t2, ratio_limit):
+    if ratio_limit >= 1:
+        return t1 == t2
+    return SequenceMatcher(None, t1, t2).ratio() >= ratio_limit
+
+
 class ResultItem():
     def __init__(self, text, index):
         self.text = text

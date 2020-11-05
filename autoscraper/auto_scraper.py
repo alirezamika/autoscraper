@@ -10,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from autoscraper.utils import get_random_str, unique_hashable, unique_stack_list, \
-    ResultItem, FuzzyText, get_non_rec_text
+    ResultItem, FuzzyText, get_non_rec_text, text_match
 
 
 class AutoScraper(object):
@@ -119,10 +119,10 @@ class AutoScraper(object):
         return attrs
 
     @staticmethod
-    def _child_has_text(child, text, url):
+    def _child_has_text(child, text, url, text_fuzz_ratio):
         child_text = child.getText().strip()
 
-        if text == child_text:
+        if text_match(text, child_text, text_fuzz_ratio):
             parent_text = child.parent.getText().strip()
             if child_text == parent_text:
                 return False
@@ -130,7 +130,7 @@ class AutoScraper(object):
             child.wanted_attr = None
             return True
 
-        if text == get_non_rec_text(child):
+        if text_match(text, get_non_rec_text(child), text_fuzz_ratio):
             child.is_non_rec_text = True
             child.wanted_attr = None
             return True
@@ -140,7 +140,7 @@ class AutoScraper(object):
                 continue
 
             value = value.strip()
-            if text == value:
+            if text_match(text, value, text_fuzz_ratio):
                 child.wanted_attr = key
                 return True
 
@@ -153,13 +153,14 @@ class AutoScraper(object):
 
         return False
 
-    def _get_children(self, soup, text, url):
+    def _get_children(self, soup, text, url, text_fuzz_ratio):
         text = text.strip()
         children = reversed(soup.findChildren())
-        children = [x for x in children if self._child_has_text(x, text, url)]
+        children = [x for x in children if self._child_has_text(x, text, url, text_fuzz_ratio)]
         return children
 
-    def build(self, url=None, wanted_list=None, wanted_dict=None, html=None, request_args=None, update=False):
+    def build(self, url=None, wanted_list=None, wanted_dict=None, html=None, request_args=None,
+              update=False, text_fuzz_ratio=1.0):
         """
         Automatically constructs a set of rules to scrape the specified target[s] from a web page.
             The rules are represented as stack_list.
@@ -190,9 +191,12 @@ class AutoScraper(object):
             If True, new learned rules will be added to the previous ones.
             If False, all previously learned rules will be removed.
 
+        text_fuzz_ratio: float in range [0, 1], optional, defaults to 1.0
+            The fuzziness ratio threshold for matching the wanted contents.
+
         Returns:
         --------
-        None
+        List of similar results
         """
 
         soup = self._get_soup(url=url, html=html, request_args=request_args)
@@ -212,7 +216,7 @@ class AutoScraper(object):
             wanted_list += wanted_items
 
             for wanted in wanted_items:
-                children = self._get_children(soup, wanted, url)
+                children = self._get_children(soup, wanted, url, text_fuzz_ratio)
 
                 for child in children:
                     result, stack = self._get_result_for_child(child, soup, url)
@@ -223,11 +227,8 @@ class AutoScraper(object):
         result_list = [item.text for item in result_list]
         result_list = unique_hashable(result_list)
 
-        if all(w in result_list for w in wanted_list):
-            self.stack_list = unique_stack_list(self.stack_list)
-            return result_list
-
-        return None
+        self.stack_list = unique_stack_list(self.stack_list)
+        return result_list
 
     @classmethod
     def _build_stack(cls, child, url):
