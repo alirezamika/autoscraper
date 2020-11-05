@@ -319,7 +319,7 @@ class AutoScraper(object):
 
         wanted_attr = stack['wanted_attr']
         is_full_url = stack['is_full_url']
-        is_non_rec_text = stack['is_non_rec_text']
+        is_non_rec_text = stack.get('is_non_rec_text', False)
         result = [ResultItem(self._fetch_result_from_child(i, wanted_attr,
                               is_full_url, url, is_non_rec_text),
                               getattr(i, 'child_index', 0)) for i in parents]
