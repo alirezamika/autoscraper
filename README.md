@@ -140,6 +140,8 @@ scraper.load('yahoo-finance')
 ## Issues
 Feel free to open an issue if you have any problem using the module.
 
+[![Contact me on Codementor](https://www.codementor.io/m-badges/alirezamika/contact-me.svg)](https://www.codementor.io/@alirezamika?refer=badge)
+
 ## Support the project
 
 <a href="https://www.buymeacoffee.com/alirezam" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-black.png" alt="Buy Me A Coffee" height="45" width="163" ></a>
