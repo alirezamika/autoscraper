@@ -1,6 +1,5 @@
 import hashlib
 import json
-import unicodedata
 
 from collections import defaultdict
 from html import unescape
@@ -10,7 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from autoscraper.utils import get_random_str, unique_hashable, unique_stack_list, \
-    ResultItem, FuzzyText, get_non_rec_text, text_match
+    ResultItem, FuzzyText, get_non_rec_text, text_match, normalize
 
 
 class AutoScraper(object):
@@ -92,7 +91,7 @@ class AutoScraper(object):
         request_args = request_args or {}
 
         if html:
-            html = unicodedata.normalize("NFKD", unescape(html))
+            html = normalize(unescape(html))
             return BeautifulSoup(html, 'lxml')
 
         headers = dict(cls.request_headers)
@@ -102,7 +101,7 @@ class AutoScraper(object):
         user_headers = request_args.pop('headers', {})
         headers.update(user_headers)
         html = requests.get(url, headers=headers, **request_args).text
-        html = unicodedata.normalize("NFKD", unescape(html))
+        html = normalize(unescape(html))
 
         return BeautifulSoup(html, 'lxml')
 
@@ -154,7 +153,6 @@ class AutoScraper(object):
         return False
 
     def _get_children(self, soup, text, url, text_fuzz_ratio):
-        text = text.strip()
         children = reversed(soup.findChildren())
         children = [x for x in children if self._child_has_text(x, text, url, text_fuzz_ratio)]
         return children
@@ -170,13 +168,14 @@ class AutoScraper(object):
         url: str, optional
             URL of the target web page. You should either pass url or html or both.
 
-        wanted_list: list, optional
+        wanted_list: list of strings or compiled regular expressions, optional
             A list of needed contents to be scraped.
                 AutoScraper learns a set of rules to scrape these targets. If specified,
                 wanted_dict will be ignored.
         
         wanted_dict: dict, optional
-            A dict of needed contents to be scraped. Keys are aliases and values are list of target texts.
+            A dict of needed contents to be scraped. Keys are aliases and values are list of target texts
+                or compiled regular expressions.
                 AutoScraper learns a set of rules to scrape these targets and sets its aliases.
 
         html: str, optional
@@ -212,7 +211,7 @@ class AutoScraper(object):
         wanted_list = []
 
         for alias, wanted_items in wanted_dict.items():
-            wanted_items = [unicodedata.normalize("NFKD", w) for w in wanted_items]
+            wanted_items = [normalize(w) for w in wanted_items]
             wanted_list += wanted_items
 
             for wanted in wanted_items:

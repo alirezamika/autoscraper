@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import random
 import string
+import unicodedata
 
 from difflib import SequenceMatcher
 
@@ -32,7 +33,15 @@ def get_non_rec_text(element):
     return ''.join(element.find_all(text=True, recursive=False)).strip()
 
 
+def normalize(item):
+    if not isinstance(item, str):
+        return item
+    return unicodedata.normalize("NFKD", item.strip())
+
+
 def text_match(t1, t2, ratio_limit):
+    if hasattr(t1, 'fullmatch'):
+        return bool(t1.fullmatch(t2))
     if ratio_limit >= 1:
         return t1 == t2
     return SequenceMatcher(None, t1, t2).ratio() >= ratio_limit
