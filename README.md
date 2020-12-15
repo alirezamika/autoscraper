@@ -140,7 +140,6 @@ scraper.load('yahoo-finance')
 ## Issues
 Feel free to open an issue if you have any problem using the module.
 
-[![Contact me on Codementor](https://www.codementor.io/m-badges/alirezamika/contact-me.svg)](https://www.codementor.io/@alirezamika?refer=badge)
 
 ## Support the project
 
