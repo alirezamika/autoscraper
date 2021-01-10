@@ -1,6 +1,5 @@
 import hashlib
 import json
-
 from collections import defaultdict
 from html import unescape
 from urllib.parse import urljoin, urlparse
@@ -8,8 +7,16 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from autoscraper.utils import get_random_str, unique_hashable, unique_stack_list, \
-    ResultItem, FuzzyText, get_non_rec_text, text_match, normalize
+from autoscraper.utils import (
+    FuzzyText,
+    ResultItem,
+    get_non_rec_text,
+    get_random_str,
+    normalize,
+    text_match,
+    unique_hashable,
+    unique_stack_list,
+)
 
 
 class AutoScraper(object):
@@ -37,8 +44,8 @@ class AutoScraper(object):
     """
 
     request_headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 \
-            (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36'
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 \
+            (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36"
     }
 
     def __init__(self, stack_list=None):
@@ -59,7 +66,7 @@ class AutoScraper(object):
         """
 
         data = dict(stack_list=self.stack_list)
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             json.dump(data, f)
 
     def load(self, file_path):
@@ -76,7 +83,7 @@ class AutoScraper(object):
         None
         """
 
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             data = json.load(f)
 
         # for backward compatibility
@@ -84,7 +91,7 @@ class AutoScraper(object):
             self.stack_list = data
             return
 
-        self.stack_list = data['stack_list']
+        self.stack_list = data["stack_list"]
 
     @classmethod
     def _get_soup(cls, url=None, html=None, request_args=None):
@@ -92,29 +99,29 @@ class AutoScraper(object):
 
         if html:
             html = normalize(unescape(html))
-            return BeautifulSoup(html, 'lxml')
+            return BeautifulSoup(html, "lxml")
 
         headers = dict(cls.request_headers)
         if url:
-            headers['Host'] = urlparse(url).netloc
+            headers["Host"] = urlparse(url).netloc
 
-        user_headers = request_args.pop('headers', {})
+        user_headers = request_args.pop("headers", {})
         headers.update(user_headers)
         html = requests.get(url, headers=headers, **request_args).text
         html = normalize(unescape(html))
 
-        return BeautifulSoup(html, 'lxml')
+        return BeautifulSoup(html, "lxml")
 
     @staticmethod
     def _get_valid_attrs(item):
-        key_attrs = {'class', 'style'}
+        key_attrs = {"class", "style"}
         attrs = {
-            k: v if v != [] else '' for k, v in item.attrs.items() if k in key_attrs
+            k: v if v != [] else "" for k, v in item.attrs.items() if k in key_attrs
         }
 
         for attr in key_attrs:
             if attr not in attrs:
-                attrs[attr] = ''
+                attrs[attr] = ""
         return attrs
 
     @staticmethod
@@ -143,9 +150,9 @@ class AutoScraper(object):
                 child.wanted_attr = key
                 return True
 
-            if key in {'href', 'src'}:
+            if key in {"href", "src"}:
                 full_url = urljoin(url, value)
-                if text == full_url:
+                if text_match(text, full_url, text_fuzz_ratio):
                     child.wanted_attr = key
                     child.is_full_url = True
                     return True
@@ -154,11 +161,21 @@ class AutoScraper(object):
 
     def _get_children(self, soup, text, url, text_fuzz_ratio):
         children = reversed(soup.findChildren())
-        children = [x for x in children if self._child_has_text(x, text, url, text_fuzz_ratio)]
+        children = [
+            x for x in children if self._child_has_text(x, text, url, text_fuzz_ratio)
+        ]
         return children
 
-    def build(self, url=None, wanted_list=None, wanted_dict=None, html=None, request_args=None,
-              update=False, text_fuzz_ratio=1.0):
+    def build(
+        self,
+        url=None,
+        wanted_list=None,
+        wanted_dict=None,
+        html=None,
+        request_args=None,
+        update=False,
+        text_fuzz_ratio=1.0,
+    ):
         """
         Automatically constructs a set of rules to scrape the specified target[s] from a web page.
             The rules are represented as stack_list.
@@ -172,7 +189,7 @@ class AutoScraper(object):
             A list of needed contents to be scraped.
                 AutoScraper learns a set of rules to scrape these targets. If specified,
                 wanted_dict will be ignored.
-        
+
         wanted_dict: dict, optional
             A dict of needed contents to be scraped. Keys are aliases and values are list of target texts
                 or compiled regular expressions.
@@ -206,7 +223,7 @@ class AutoScraper(object):
             self.stack_list = []
 
         if wanted_list:
-            wanted_dict = {'': wanted_list}
+            wanted_dict = {"": wanted_list}
 
         wanted_list = []
 
@@ -219,7 +236,7 @@ class AutoScraper(object):
 
                 for child in children:
                     result, stack = self._get_result_for_child(child, soup, url)
-                    stack['alias'] = alias
+                    stack["alias"] = alias
                     result_list += result
                     self.stack_list.append(stack)
 
@@ -239,27 +256,33 @@ class AutoScraper(object):
             if not grand_parent:
                 break
 
-            children = grand_parent.findAll(parent.name, cls._get_valid_attrs(parent),
-                                                         recursive=False)
+            children = grand_parent.findAll(
+                parent.name, cls._get_valid_attrs(parent), recursive=False
+            )
             for i, c in enumerate(children):
                 if c == parent:
                     content.insert(
-                        0, (grand_parent.name, cls._get_valid_attrs(grand_parent), i))
+                        0, (grand_parent.name, cls._get_valid_attrs(grand_parent), i)
+                    )
                     break
 
-            if grand_parent.name == 'html':
+            if grand_parent.name == "html":
                 break
 
             parent = grand_parent
 
-        wanted_attr = getattr(child, 'wanted_attr', None)
-        is_full_url = getattr(child, 'is_full_url', False)
-        is_non_rec_text = getattr(child, 'is_non_rec_text', False)
-        stack = dict(content=content, wanted_attr=wanted_attr, is_full_url=is_full_url,
-                     is_non_rec_text=is_non_rec_text)
-        stack['url'] = url if is_full_url else ''
-        stack['hash'] = hashlib.sha256(str(stack).encode('utf-8')).hexdigest()
-        stack['stack_id'] = 'rule_' + get_random_str(4)
+        wanted_attr = getattr(child, "wanted_attr", None)
+        is_full_url = getattr(child, "is_full_url", False)
+        is_non_rec_text = getattr(child, "is_non_rec_text", False)
+        stack = dict(
+            content=content,
+            wanted_attr=wanted_attr,
+            is_full_url=is_full_url,
+            is_non_rec_text=is_non_rec_text,
+        )
+        stack["url"] = url if is_full_url else ""
+        stack["hash"] = hashlib.sha256(str(stack).encode("utf-8")).hexdigest()
+        stack["stack_id"] = "rule_" + get_random_str(4)
         return stack
 
     def _get_result_for_child(self, child, soup, url):
@@ -295,8 +318,8 @@ class AutoScraper(object):
 
     def _get_result_with_stack(self, stack, soup, url, attr_fuzz_ratio, **kwargs):
         parents = [soup]
-        stack_content = stack['content']
-        contain_sibling_leaves = kwargs.get('contain_sibling_leaves', False)
+        stack_content = stack["content"]
+        contain_sibling_leaves = kwargs.get("contain_sibling_leaves", False)
         for index, item in enumerate(stack_content):
             children = []
             for parent in parents:
@@ -317,18 +340,26 @@ class AutoScraper(object):
 
             parents = children
 
-        wanted_attr = stack['wanted_attr']
-        is_full_url = stack['is_full_url']
-        is_non_rec_text = stack.get('is_non_rec_text', False)
-        result = [ResultItem(self._fetch_result_from_child(i, wanted_attr,
-                              is_full_url, url, is_non_rec_text),
-                              getattr(i, 'child_index', 0)) for i in parents]
+        wanted_attr = stack["wanted_attr"]
+        is_full_url = stack["is_full_url"]
+        is_non_rec_text = stack.get("is_non_rec_text", False)
+        result = [
+            ResultItem(
+                self._fetch_result_from_child(
+                    i, wanted_attr, is_full_url, url, is_non_rec_text
+                ),
+                getattr(i, "child_index", 0),
+            )
+            for i in parents
+        ]
         result = [x for x in result if x.text]
         return result
 
-    def _get_result_with_stack_index_based(self, stack, soup, url, attr_fuzz_ratio, **kwargs):
+    def _get_result_with_stack_index_based(
+        self, stack, soup, url, attr_fuzz_ratio, **kwargs
+    ):
         p = soup.findChildren(recursive=False)[0]
-        stack_content = stack['content']
+        stack_content = stack["content"]
         for index, item in enumerate(stack_content[:-1]):
             content = stack_content[index + 1]
             attrs = content[1]
@@ -340,28 +371,48 @@ class AutoScraper(object):
             idx = min(len(p) - 1, item[2])
             p = p[idx]
 
-        result = [ResultItem(self._fetch_result_from_child(
-            p, stack['wanted_attr'], stack['is_full_url'], url, stack['is_non_rec_text']),
-            getattr(p, 'child_index', 0))]
+        result = [
+            ResultItem(
+                self._fetch_result_from_child(
+                    p,
+                    stack["wanted_attr"],
+                    stack["is_full_url"],
+                    url,
+                    stack["is_non_rec_text"],
+                ),
+                getattr(p, "child_index", 0),
+            )
+        ]
         result = [x for x in result if x.text]
         return result
 
-    def _get_result_by_func(self, func, url, html, soup, request_args, grouped,
-                            group_by_alias, unique, attr_fuzz_ratio, **kwargs):
+    def _get_result_by_func(
+        self,
+        func,
+        url,
+        html,
+        soup,
+        request_args,
+        grouped,
+        group_by_alias,
+        unique,
+        attr_fuzz_ratio,
+        **kwargs
+    ):
         if not soup:
             soup = self._get_soup(url=url, html=html, request_args=request_args)
 
-        keep_order = kwargs.get('keep_order', False)
+        keep_order = kwargs.get("keep_order", False)
 
         if group_by_alias or (keep_order and not grouped):
             for index, child in enumerate(soup.findChildren()):
-                setattr(child, 'child_index', index)
+                setattr(child, "child_index", index)
 
         result_list = []
         grouped_result = defaultdict(list)
         for stack in self.stack_list:
             if not url:
-                url = stack.get('url', '')
+                url = stack.get("url", "")
 
             result = func(stack, soup, url, attr_fuzz_ratio, **kwargs)
 
@@ -369,14 +420,17 @@ class AutoScraper(object):
                 result_list += result
                 continue
 
-            group_id = stack.get('alias', '') if group_by_alias else stack['stack_id']
+            group_id = stack.get("alias", "") if group_by_alias else stack["stack_id"]
             grouped_result[group_id] += result
 
-        return self._clean_result(result_list, grouped_result, grouped, group_by_alias,
-                                  unique, keep_order)
+        return self._clean_result(
+            result_list, grouped_result, grouped, group_by_alias, unique, keep_order
+        )
 
     @staticmethod
-    def _clean_result(result_list, grouped_result, grouped, grouped_by_alias, unique, keep_order):
+    def _clean_result(
+        result_list, grouped_result, grouped, grouped_by_alias, unique, keep_order
+    ):
         if not grouped and not grouped_by_alias:
             if unique is None:
                 unique = True
@@ -397,9 +451,19 @@ class AutoScraper(object):
 
         return dict(grouped_result)
 
-    def get_result_similar(self, url=None, html=None, soup=None, request_args=None,
-                           grouped=False, group_by_alias=False, unique=None, attr_fuzz_ratio=1.0,
-                           keep_order=False, contain_sibling_leaves=False):
+    def get_result_similar(
+        self,
+        url=None,
+        html=None,
+        soup=None,
+        request_args=None,
+        grouped=False,
+        group_by_alias=False,
+        unique=None,
+        attr_fuzz_ratio=1.0,
+        keep_order=False,
+        contain_sibling_leaves=False,
+    ):
         """
         Gets similar results based on the previously learned rules.
 
@@ -444,13 +508,31 @@ class AutoScraper(object):
         """
 
         func = self._get_result_with_stack
-        return self._get_result_by_func(func, url, html, soup, request_args, grouped,
-                                         group_by_alias, unique, attr_fuzz_ratio,
-                                         keep_order=keep_order,
-                                         contain_sibling_leaves=contain_sibling_leaves)
+        return self._get_result_by_func(
+            func,
+            url,
+            html,
+            soup,
+            request_args,
+            grouped,
+            group_by_alias,
+            unique,
+            attr_fuzz_ratio,
+            keep_order=keep_order,
+            contain_sibling_leaves=contain_sibling_leaves,
+        )
 
-    def get_result_exact(self, url=None, html=None, soup=None, request_args=None,
-                         grouped=False, group_by_alias=False, unique=None, attr_fuzz_ratio=1.0):
+    def get_result_exact(
+        self,
+        url=None,
+        html=None,
+        soup=None,
+        request_args=None,
+        grouped=False,
+        group_by_alias=False,
+        unique=None,
+        attr_fuzz_ratio=1.0,
+    ):
         """
         Gets exact results based on the previously learned rules.
 
@@ -489,11 +571,28 @@ class AutoScraper(object):
         """
 
         func = self._get_result_with_stack_index_based
-        return self._get_result_by_func(func, url, html, soup, request_args, grouped,
-                                        group_by_alias, unique, attr_fuzz_ratio)
+        return self._get_result_by_func(
+            func,
+            url,
+            html,
+            soup,
+            request_args,
+            grouped,
+            group_by_alias,
+            unique,
+            attr_fuzz_ratio,
+        )
 
-    def get_result(self, url=None, html=None, request_args=None, grouped=False,
-                   group_by_alias=False, unique=None, attr_fuzz_ratio=1.0):
+    def get_result(
+        self,
+        url=None,
+        html=None,
+        request_args=None,
+        grouped=False,
+        group_by_alias=False,
+        unique=None,
+        attr_fuzz_ratio=1.0,
+    ):
         """
         Gets similar and exact results based on the previously learned rules.
 
@@ -532,8 +631,14 @@ class AutoScraper(object):
         """
 
         soup = self._get_soup(url=url, html=html, request_args=request_args)
-        args = dict(url=url, soup=soup, grouped=grouped, group_by_alias=group_by_alias,
-                                        unique=unique, attr_fuzz_ratio=attr_fuzz_ratio)
+        args = dict(
+            url=url,
+            soup=soup,
+            grouped=grouped,
+            group_by_alias=group_by_alias,
+            unique=unique,
+            attr_fuzz_ratio=attr_fuzz_ratio,
+        )
         similar = self.get_result_similar(**args)
         exact = self.get_result_exact(**args)
         return similar, exact
@@ -552,7 +657,7 @@ class AutoScraper(object):
         None
         """
 
-        self.stack_list = [x for x in self.stack_list if x['stack_id'] not in rules]
+        self.stack_list = [x for x in self.stack_list if x["stack_id"] not in rules]
 
     def keep_rules(self, rules):
         """
@@ -568,7 +673,7 @@ class AutoScraper(object):
         None
         """
 
-        self.stack_list = [x for x in self.stack_list if x['stack_id'] in rules]
+        self.stack_list = [x for x in self.stack_list if x["stack_id"] in rules]
 
     def set_rule_aliases(self, rule_aliases):
         """
@@ -584,10 +689,10 @@ class AutoScraper(object):
         None
         """
 
-        id_to_stack = {stack['stack_id']: stack for stack in self.stack_list}
+        id_to_stack = {stack["stack_id"]: stack for stack in self.stack_list}
         for rule_id, alias in rule_aliases.items():
-            id_to_stack[rule_id]['alias'] = alias
+            id_to_stack[rule_id]["alias"] = alias
 
     def generate_python_code(self):
         # deprecated
-        print('This function is deprecated. Please use save() and load() instead.')
+        print("This function is deprecated. Please use save() and load() instead.")
