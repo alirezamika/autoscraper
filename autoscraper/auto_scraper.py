@@ -95,6 +95,7 @@ class AutoScraper(object):
 
     @classmethod
     def _fetch_html(cls, url, request_args=None):
+        request_args = request_args or {}
         headers = dict(cls.request_headers)
         if url:
             headers["Host"] = urlparse(url).netloc
@@ -106,8 +107,6 @@ class AutoScraper(object):
 
     @classmethod
     def _get_soup(cls, url=None, html=None, request_args=None):
-        request_args = request_args or {}
-
         if html:
             html = normalize(unescape(html))
             return BeautifulSoup(html, "lxml")
