@@ -94,13 +94,7 @@ class AutoScraper(object):
         self.stack_list = data["stack_list"]
 
     @classmethod
-    def _get_soup(cls, url=None, html=None, request_args=None):
-        request_args = request_args or {}
-
-        if html:
-            html = normalize(unescape(html))
-            return BeautifulSoup(html, "lxml")
-
+    def _fetch_html(cls, url, request_args=None):
         headers = dict(cls.request_headers)
         if url:
             headers["Host"] = urlparse(url).netloc
@@ -108,6 +102,17 @@ class AutoScraper(object):
         user_headers = request_args.pop("headers", {})
         headers.update(user_headers)
         html = requests.get(url, headers=headers, **request_args).text
+        return html
+
+    @classmethod
+    def _get_soup(cls, url=None, html=None, request_args=None):
+        request_args = request_args or {}
+
+        if html:
+            html = normalize(unescape(html))
+            return BeautifulSoup(html, "lxml")
+
+        html = cls._fetch_html(url, request_args)
         html = normalize(unescape(html))
 
         return BeautifulSoup(html, "lxml")
@@ -130,7 +135,7 @@ class AutoScraper(object):
 
         if text_match(text, child_text, text_fuzz_ratio):
             parent_text = child.parent.getText().strip()
-            if child_text == parent_text:
+            if child_text == parent_text and child.parent.parent:
                 return False
 
             child.wanted_attr = None
@@ -266,7 +271,7 @@ class AutoScraper(object):
                     )
                     break
 
-            if grand_parent.name == "html":
+            if not grand_parent.parent:
                 break
 
             parent = grand_parent
@@ -322,6 +327,8 @@ class AutoScraper(object):
         contain_sibling_leaves = kwargs.get("contain_sibling_leaves", False)
         for index, item in enumerate(stack_content):
             children = []
+            if item[0] == "[document]":
+                continue
             for parent in parents:
 
                 attrs = item[1]
@@ -361,6 +368,8 @@ class AutoScraper(object):
         p = soup.findChildren(recursive=False)[0]
         stack_content = stack["content"]
         for index, item in enumerate(stack_content[:-1]):
+            if item[0] == "[document]":
+                continue
             content = stack_content[index + 1]
             attrs = content[1]
             if attr_fuzz_ratio < 1.0:
