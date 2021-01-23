@@ -102,7 +102,12 @@ class AutoScraper(object):
 
         user_headers = request_args.pop("headers", {})
         headers.update(user_headers)
-        html = requests.get(url, headers=headers, **request_args).text
+        res = requests.get(url, headers=headers, **request_args)
+        if res.encoding == "ISO-8859-1" and not "ISO-8859-1" in res.headers.get(
+            "Content-Type", ""
+        ):
+            res.encoding = res.apparent_encoding
+        html = res.text
         return html
 
     @classmethod
