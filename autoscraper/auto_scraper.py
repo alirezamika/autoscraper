@@ -363,7 +363,8 @@ class AutoScraper(object):
             )
             for i in parents
         ]
-        result = [x for x in result if x.text]
+        if not kwargs.get("keep_blank", False):
+            result = [x for x in result if x.text]
         return result
 
     def _get_result_with_stack_index_based(
@@ -396,7 +397,8 @@ class AutoScraper(object):
                 getattr(p, "child_index", 0),
             )
         ]
-        result = [x for x in result if x.text]
+        if not kwargs.get("keep_blank", False):
+            result = [x for x in result if x.text]
         return result
 
     def _get_result_by_func(
@@ -474,6 +476,7 @@ class AutoScraper(object):
         group_by_alias=False,
         unique=None,
         attr_fuzz_ratio=1.0,
+        keep_blank=False,
         keep_order=False,
         contain_sibling_leaves=False,
     ):
@@ -508,6 +511,9 @@ class AutoScraper(object):
         attr_fuzz_ratio: float in range [0, 1], optional, defaults to 1.0
             The fuzziness ratio threshold for matching html tag attributes.
 
+        keep_blank: bool, optional, defaults to False
+            If set to True, missing values will be returned as empty strings.
+
         keep_order: bool, optional, defaults to False
             If set to True, the results will be ordered as they are present on the web page.
 
@@ -531,6 +537,7 @@ class AutoScraper(object):
             group_by_alias,
             unique,
             attr_fuzz_ratio,
+            keep_blank=keep_blank,
             keep_order=keep_order,
             contain_sibling_leaves=contain_sibling_leaves,
         )
@@ -545,6 +552,7 @@ class AutoScraper(object):
         group_by_alias=False,
         unique=None,
         attr_fuzz_ratio=1.0,
+        keep_blank=False,
     ):
         """
         Gets exact results based on the previously learned rules.
@@ -577,6 +585,9 @@ class AutoScraper(object):
         attr_fuzz_ratio: float in range [0, 1], optional, defaults to 1.0
             The fuzziness ratio threshold for matching html tag attributes.
 
+        keep_blank: bool, optional, defaults to False
+            If set to True, missing values will be returned as empty strings.
+
         Returns:
         --------
         List of exact results scraped from the web page.
@@ -594,6 +605,7 @@ class AutoScraper(object):
             group_by_alias,
             unique,
             attr_fuzz_ratio,
+            keep_blank=keep_blank,
         )
 
     def get_result(
