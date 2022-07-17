@@ -10,7 +10,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="autoscraper",
-    version="1.1.12",
+    version="1.1.14",
     description="A Smart, Automatic, Fast and Lightweight Web Scraper for Python",
     long_description_content_type="text/markdown",
     long_description=long_description,
