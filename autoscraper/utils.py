@@ -48,9 +48,10 @@ def text_match(t1, t2, ratio_limit):
 
 
 class ResultItem():
-    def __init__(self, text, index):
+    def __init__(self, text, index, element):
         self.text = text
         self.index = index
+        self.element = element
 
     def __str__(self):
         return self.text
