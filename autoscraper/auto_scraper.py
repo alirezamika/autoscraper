@@ -360,6 +360,7 @@ class AutoScraper(object):
                     i, wanted_attr, is_full_url, url, is_non_rec_text
                 ),
                 getattr(i, "child_index", 0),
+                i
             )
             for i in parents
         ]
@@ -395,6 +396,7 @@ class AutoScraper(object):
                     stack["is_non_rec_text"],
                 ),
                 getattr(p, "child_index", 0),
+                p
             )
         ]
         if not kwargs.get("keep_blank", False):
@@ -439,19 +441,20 @@ class AutoScraper(object):
             grouped_result[group_id] += result
 
         return self._clean_result(
-            result_list, grouped_result, grouped, group_by_alias, unique, keep_order
+            result_list, grouped_result, grouped, group_by_alias, unique, keep_order,
+            kwargs.get("return_elements", False)
         )
 
     @staticmethod
     def _clean_result(
-        result_list, grouped_result, grouped, grouped_by_alias, unique, keep_order
+        result_list, grouped_result, grouped, grouped_by_alias, unique, keep_order, return_elements
     ):
         if not grouped and not grouped_by_alias:
             if unique is None:
                 unique = True
             if keep_order:
                 result_list = sorted(result_list, key=lambda x: x.index)
-            result = [x.text for x in result_list]
+            result = [x.text if not return_elements else x.element for x in result_list]
             if unique:
                 result = unique_hashable(result)
             return result
@@ -459,7 +462,7 @@ class AutoScraper(object):
         for k, val in grouped_result.items():
             if grouped_by_alias:
                 val = sorted(val, key=lambda x: x.index)
-            val = [x.text for x in val]
+            val = [x.text if not return_elements else x.element for x in val]
             if unique:
                 val = unique_hashable(val)
             grouped_result[k] = val
@@ -479,6 +482,7 @@ class AutoScraper(object):
         keep_blank=False,
         keep_order=False,
         contain_sibling_leaves=False,
+        return_elements=False
     ):
         """
         Gets similar results based on the previously learned rules.
@@ -540,6 +544,7 @@ class AutoScraper(object):
             keep_blank=keep_blank,
             keep_order=keep_order,
             contain_sibling_leaves=contain_sibling_leaves,
+            return_element=return_elements
         )
 
     def get_result_exact(
@@ -553,6 +558,7 @@ class AutoScraper(object):
         unique=None,
         attr_fuzz_ratio=1.0,
         keep_blank=False,
+        return_elements=False
     ):
         """
         Gets exact results based on the previously learned rules.
@@ -606,6 +612,7 @@ class AutoScraper(object):
             unique,
             attr_fuzz_ratio,
             keep_blank=keep_blank,
+            return_elements=return_elements
         )
 
     def get_result(
