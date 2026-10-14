@@ -102,6 +102,7 @@ class AutoScraper(object):
         user_headers = request_args.pop("headers", {})
         headers.update(user_headers)
         res = requests.get(url, headers=headers, **request_args)
+        res.raise_for_status()
         if res.encoding == "ISO-8859-1" and not "ISO-8859-1" in res.headers.get(
             "Content-Type", ""
         ):
