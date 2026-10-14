@@ -118,6 +118,12 @@ scraper.build(url, wanted_list)
 Simple, right?
 
 
+### HTTP fetch errors
+
+URL fetches raise `requests.HTTPError` for HTTP 4xx and 5xx responses before
+learning or applying scraping rules. Successful responses and redirects are
+processed as usual. This applies to `build()` and all `get_result*()` methods.
+
 ### Saving the model
 
 We can now save the built model to use it later. To save:
