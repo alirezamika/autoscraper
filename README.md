@@ -83,7 +83,7 @@ print(result)
 ```
 Note that you should update the `wanted_list` if you want to copy this code, as the content of the page dynamically changes.
 
-You can also pass any custom `requests` module parameter. for example you may want to use proxies or custom headers:
+You can also pass any custom `requests` module parameter. for example you may want to use proxies or custom headers. URL requests use a 10-second timeout by default; override it with `request_args=dict(timeout=...)` when needed:
 
 ```python
 proxies = {
