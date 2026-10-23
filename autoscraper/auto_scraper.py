@@ -42,6 +42,8 @@ class AutoScraper(object):
     keep_rules() - Keeps only the specified learned rules in the stack_list and removes the others.
     """
 
+    DEFAULT_REQUEST_TIMEOUT = 10
+
     request_headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 \
             (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36"
@@ -94,7 +96,8 @@ class AutoScraper(object):
 
     @classmethod
     def _fetch_html(cls, url, request_args=None):
-        request_args = request_args or {}
+        request_args = dict(request_args or {})
+        request_args.setdefault("timeout", cls.DEFAULT_REQUEST_TIMEOUT)
         headers = dict(cls.request_headers)
         if url:
             headers["Host"] = urlparse(url).netloc
